@@ -22,7 +22,7 @@ Where a config looks like this:
 
 ```xml
 <PIDService>
-  <hostName>www.pidconsortium.eu/</hostName>
+  <hostName>www.pidconsortium.eu</hostName>
   <URI>http://www.pidconsortium.eu/</URI>
   <HandlePrefix>12345</HandlePrefix>
   <userName>epic</userName>
