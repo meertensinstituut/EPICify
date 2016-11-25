@@ -1,10 +1,10 @@
-# PIDService
+# EPICify
 A Java library and tool to interact with an EPIC v2 PID service.
 
 ```sh
 $ mvn clean package
-$ java -jar target/pidservice.jar 
-java -jar pidservice.jar <options>
+$ java -jar target/epicify.jar 
+java -jar epicify.jar <options>
 
 new handle   : <path to config> new <suffix>? <uri>
 get handle   : <path to config> get <prefix/suffix>
@@ -36,4 +36,4 @@ Change ```test``` into ```production```.
 
 ----
 
-_NOTE_: PIDService is based on work by Jan Pieter Kunst and others @ http://www.meertens.knaw.nl/ontwikkeling
+_NOTE_: EPICify is based on work by Jan Pieter Kunst and others @ http://www.meertens.knaw.nl/ontwikkeling
