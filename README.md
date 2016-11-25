@@ -34,6 +34,10 @@ Where a config looks like this:
 
 Change ```test``` into ```production```.
 
-----
+--
 
 _NOTE_: EPICify is based on work by Jan Pieter Kunst and others @ http://www.meertens.knaw.nl/ontwikkeling
+
+--
+
+[epicify](http://www.urbandictionary.com/define.php?term=Epicify) (3)
