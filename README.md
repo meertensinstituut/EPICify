@@ -33,3 +33,5 @@ Where a config looks like this:
 ```
 
 Change ```test``` into ```production```.
+
+_NOTE_: PIDService is based on work by Jan Pieter Kunst @ [http://www.meertens.knaw.nl/ontwikkeling]
