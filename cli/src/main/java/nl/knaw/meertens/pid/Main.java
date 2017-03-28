@@ -42,7 +42,7 @@ public class Main {
         try {
         
             if (args.length < 3) {
-                System.err.println("java -jar pidservice.jar <options>");
+                System.err.println("java -jar epicify.jar <options>");
                 System.err.println();
                 System.err.println("new handle   : <path to config> new <suffix>? <uri>");
                 System.err.println("get handle   : <path to config> get <prefix/suffix>");
