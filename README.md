@@ -3,7 +3,7 @@ A Java library and tool to interact with an EPIC v2 PID service.
 
 ```sh
 $ mvn clean package
-$ java -jar target/epicify.jar 
+$ java -jar cli/target/epicify.jar 
 java -jar epicify.jar <options>
 
 new handle   : <path to config> new <suffix>? <uri>
