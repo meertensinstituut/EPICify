@@ -298,7 +298,7 @@ public class PIDService {
             new AuthScope(this.hostName, 443, "realm"),
             new UsernamePasswordCredentials(this.userName, this.password));
         client.getParams().setAuthenticationPreemptive(true);
-        DeleteMethod httpDel = new DeleteMethod();
+        DeleteMethod httpDel = new DeleteMethod(uri.getPathQuery());
         httpDel.setFollowRedirects(false);
         httpDel.setQueryString(new NameValuePair[] { 
             new NameValuePair("redirect", "no") 
