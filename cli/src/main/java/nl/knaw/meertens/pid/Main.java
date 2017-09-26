@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.charset.Charset;
+import java.nio.charset.Charset;    
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,6 +34,7 @@ import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.apache.commons.httpclient.protocol.Protocol;
 
+import java.util.UUID;
 
 public class Main {
     
@@ -74,15 +75,25 @@ public class Main {
 
             XMLConfiguration xml = new XMLConfiguration(config);
             PIDService ps = new PIDService(xml,null);
-        
+            
+//            System.out.println(args.length);
+
             if (action.equals("new")) {
                 String suf = (args.length>3?args[2]:null);
-                String uri = (args.length>3?args[3]:args[2]);
+                String uri = (args.length>3?args[2]:args[1]);
+                String hdl;
                 if (uri==null) {
                     System.err.println("new handle: needs a URI!");
                     System.exit(3);
                 }
-                String hdl = suf==null?ps.requestHandle(uri):ps.requestHandle(suf,uri);
+                
+                String version = args[args.length-1].equals("8")?"8":"";
+                
+                if (args[args.length-1].equals("8")) {
+                    hdl = suf==null?ps.requestHandle(UUID.randomUUID().toString(), uri, version):ps.requestHandle(suf, uri, version);
+                } else {
+                    hdl = suf==null?ps.requestHandle(uri):ps.requestHandle(suf,uri);
+                }
                 System.err.println("new handle: "+hdl+" -> "+uri);
                 System.out.println(hdl);
             } else if (action.equals("get")) {

@@ -40,3 +40,5 @@ Thumbs.db
 *.exe
 *.o
 *.so
+/lib/target/
+/cli/target/
