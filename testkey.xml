@@ -1,9 +1,9 @@
 <PIDService>
   <Version>8</Version>
-  <hostName>epic3.storage.surfsara.nl</hostName>
+  <URI>https://test.com</URI>
+  <hostName>test.com</hostName>
   <baseuri>https://epic3.storage.surfsara.nl:8007/api/handles/</baseuri>
   <private_key>/Users/vic/Documents/clarin_readings/hsj-8.1.2/hdl_priv.pem</private_key>
-  <private_key_pk12>/Users/vic/Documents/clarin_readings/hsj-8.1.2/hdl_priv.pkcs12</private_key_pk12>
   <server_certificate_only>/Users/vic/Documents/clarin_readings/hsj-8.1.2/server.crt</server_certificate_only>
   <private_certificate>/Users/vic/Documents/clarin_readings/hsj-8.1.2/hdl_cert_no_pub.pem</private_certificate>
   <HandlePrefix>21.T12995</HandlePrefix>

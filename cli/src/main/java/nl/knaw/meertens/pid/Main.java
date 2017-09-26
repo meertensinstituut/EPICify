@@ -78,24 +78,31 @@ public class Main {
             
 //            System.out.println(args.length);
 
-            if (action.equals("new")) {
-                String suf = (args.length>3?args[2]:null);
-                String uri = (args.length>3?args[2]:args[1]);
-                String hdl;
-                if (uri==null) {
-                    System.err.println("new handle: needs a URI!");
-                    System.exit(3);
-                }
-                
+            if (action.equals("new")) {                
                 String version = args[args.length-1].equals("8")?"8":"";
                 
-                if (args[args.length-1].equals("8")) {
-                    hdl = suf==null?ps.requestHandle(UUID.randomUUID().toString(), uri, version):ps.requestHandle(suf, uri, version);
+                if (version.equals("8")) {
+                    String suf = (args.length>4?args[2]:null);
+                    String uri = (args.length>4?args[3]:args[2]);
+                    if (uri==null) {
+                        System.err.println("new handle: needs a URI!");
+                        System.exit(3);
+                    }
+                    String hdl = suf==null?ps.requestHandle(UUID.randomUUID().toString(), uri, version):ps.requestHandle(suf, uri, version);
+                    System.err.println("new handle: "+hdl+" -> "+uri);
+                    System.out.println(hdl);
                 } else {
-                    hdl = suf==null?ps.requestHandle(uri):ps.requestHandle(suf,uri);
+                    String suf = (args.length>3?args[2]:null);
+                    String uri = (args.length>3?args[3]:args[2]);
+                    if (uri==null) {
+                        System.err.println("new handle: needs a URI!");
+                        System.exit(3);
+                    }
+                    String hdl = suf==null?ps.requestHandle(uri):ps.requestHandle(suf,uri);
+                    System.err.println("new handle: "+hdl+" -> "+uri);
+                    System.out.println(hdl);
                 }
-                System.err.println("new handle: "+hdl+" -> "+uri);
-                System.out.println(hdl);
+
             } else if (action.equals("get")) {
                 if (args.length<3) {
                     System.err.println("get handle: needs a handle!");

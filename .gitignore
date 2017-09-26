@@ -1,6 +1,8 @@
 # config file 
 ######################
+*.swp
 # not to share the config on web
+testkey.xml
 clarin-epic-config.xml
 
 # OS generated files #
