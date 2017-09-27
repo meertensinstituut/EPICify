@@ -147,13 +147,27 @@ public class Main {
                 }
                 System.err.println("updated handle: "+hdl+" -> "+uri);                    
             } else if (action.equals("del")) {
-                if (args.length<3) {
-                    System.err.println("delete handle: needs a handle!");
-                    System.exit(3);
+                if (version.equals("8")) {
+                    if (args.length<4) {
+                        System.err.println("delete handle: needs a handle!");
+                        System.exit(3);
+                    }
+                    String hdl = args[2];
+                    Boolean deleted = ps.deleteHandle(hdl, version);
+                    if (deleted) {
+                        System.err.println("deleted handle: "+hdl); 
+                    } else {
+                        System.err.println("Error occured: "+hdl);
+                    }
+                } else {
+                    if (args.length<3) {
+                        System.err.println("delete handle: needs a handle!");
+                        System.exit(3);
+                    }
+                    String hdl = args[2];
+                    ps.deleteHandle(hdl);
+                    System.err.println("deleted handle: "+hdl);
                 }
-                String hdl = args[2];
-                ps.deleteHandle(hdl);
-                System.err.println("deleted handle: "+hdl);
             } else if (action.equals("csv")) {
                 if (args.length<3) {
                     System.err.println("csv action: needs a CSV file!");

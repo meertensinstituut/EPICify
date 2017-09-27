@@ -208,16 +208,7 @@ public class PIDService {
         osw.close();
 
         logger.info("Server response: " + httpsUrlConnection.getResponseCode() + httpsUrlConnection.getResponseMessage());
-        
-//        String line;
-//
-//        BufferedReader reader = new BufferedReader(new InputStreamReader(httpsUrlConnection.getInputStream()));
-//
-//        while((line = reader.readLine()) != null) {
-//            System.out.println(line);
-//        }       
-//
-//        reader.close();
+
         httpsUrlConnection.disconnect();
         
         logger.info( "Created handle["+handle+"] for location ["+a_location+"]");
@@ -408,7 +399,6 @@ public class PIDService {
             case HttpStatus.SC_OK:
 
                 String jsonString = getJsonString(httpsUrlConnection.getInputStream());
-//                System.out.println("###" + jsonString + "###");
                 JSONArray jsonArr = JSONArray.fromObject("[" + jsonString + "]");
                 json = jsonArr.getJSONObject(0);
                 location = json.getString("values");
@@ -427,7 +417,7 @@ public class PIDService {
                 break;
             default:
                 logger.error("EPIC unexpected result[" + httpsUrlConnection.getResponseMessage()+"]");
-                throw new IOException("Handle retrieval failed["+a_handle+"]. Unexpected failure: " + httpsUrlConnection.getResponseMessage() + ". " + httpsUrlConnection.getContent());
+                throw new IOException("Handle retrieval failed["+a_handle+"]. Unexpected failure: " + httpsUrlConnection.getResponseMessage() + ". " + getJsonString(httpsUrlConnection.getInputStream()));
         }
         
         httpsUrlConnection.disconnect();
@@ -530,5 +520,35 @@ public class PIDService {
             logger.debug("EPIC result["+httpDel.getResponseBodyAsString()+"]");
             httpDel.releaseConnection();
         }
+    }
+    
+    public Boolean deleteHandle(String a_handle, String version) throws MalformedURLException, IOException, NoSuchAlgorithmException, KeyStoreException, FileNotFoundException, CertificateException, UnrecoverableKeyException, KeyManagementException, InvalidKeySpecException {
+        String handle = a_handle;
+        logger.info("Deleting handle: " + this.handlePrefix + "/" + handle);
+        
+        URL url = new URL(baseUri + this.handlePrefix + "/" + handle);
+        
+        HttpsURLConnection httpsUrlConnection = (HttpsURLConnection) url.openConnection();
+        httpsUrlConnection.setSSLSocketFactory(this.getFactory());
+        httpsUrlConnection.setRequestMethod("DELETE");
+        httpsUrlConnection.setDoInput(true);
+        httpsUrlConnection.setDoOutput(false);  
+        httpsUrlConnection.setRequestProperty("Authorization", "Handle clientCert=\"true\"");
+        httpsUrlConnection.setRequestProperty("Content-Type", "application/json");
+        httpsUrlConnection.setRequestProperty("Accept", "application/json");
+        httpsUrlConnection.connect();
+        
+        int responseCode = httpsUrlConnection.getResponseCode();
+        
+        switch (responseCode) {
+            case HttpStatus.SC_OK:
+                httpsUrlConnection.disconnect();
+                return true;
+            default:
+                logger.error("EPIC unexpected result[" + responseCode + ": " + httpsUrlConnection.getResponseMessage()+"]");
+                httpsUrlConnection.disconnect();
+                return false;
+        }
+        
     }
 }
