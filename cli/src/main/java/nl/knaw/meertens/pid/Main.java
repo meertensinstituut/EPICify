@@ -77,9 +77,8 @@ public class Main {
             PIDService ps = new PIDService(xml,null);
             
 //            System.out.println(args.length);
-
+            String version = args[args.length-1].equals("8")?"8":"";
             if (action.equals("new")) {                
-                String version = args[args.length-1].equals("8")?"8":"";
                 
                 if (version.equals("8")) {
                     String suf = (args.length>4?args[2]:null);
@@ -104,19 +103,35 @@ public class Main {
                 }
 
             } else if (action.equals("get")) {
-                if (args.length<3) {
-                    System.err.println("get handle: needs a handle!");
-                    System.exit(3);
-                }
-                String hdl = args[2];
-                String uri = ps.getPIDLocation(hdl);
-                if (uri != null) {
-                    System.err.println("got handle: "+hdl+" -> "+uri);
-                    System.out.println(uri);
+                if (version.equals("8")) {
+                    if (args.length<4) {
+                        System.err.println("get handle: needs a handle!");
+                        System.exit(3);
+                    }
+                    String hdl = args[2];
+                    String uri = ps.getPIDLocation(hdl, version);
+                    if (uri != null) {
+                        System.err.println("got handle: "+hdl+" -> "+uri);
+                        System.out.println(uri);
+                    } else {
+                        System.err.println("get handle: "+hdl+" -> doesn't exist!");
+                        System.exit(9);
+                    }
                 } else {
-                    System.err.println("get handle: "+hdl+" -> doesn't exist!");
-                    System.exit(9);
-                }                    
+                    if (args.length<3) {
+                        System.err.println("get handle: needs a handle!");
+                        System.exit(3);
+                    }
+                    String hdl = args[2];
+                    String uri = ps.getPIDLocation(hdl);
+                    if (uri != null) {
+                        System.err.println("got handle: "+hdl+" -> "+uri);
+                        System.out.println(uri);
+                    } else {
+                        System.err.println("get handle: "+hdl+" -> doesn't exist!");
+                        System.exit(9);
+                    }
+                }
             } else if (action.equals("upd")) {
                 if (args.length<4) {
                     System.err.println("update handle: needs a handle and an uri!");

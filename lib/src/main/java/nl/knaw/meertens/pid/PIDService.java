@@ -1,11 +1,14 @@
 package nl.knaw.meertens.pid;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 
 import java.io.OutputStreamWriter;
 
@@ -58,7 +61,6 @@ import org.apache.commons.httpclient.protocol.Protocol;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 public class PIDService {
     
@@ -371,6 +373,67 @@ public class PIDService {
 	}
     }
 	
+    public String getJsonString(InputStream stream) throws IOException {
+        BufferedReader rd = new BufferedReader(new InputStreamReader(stream));
+        StringBuilder sb = new StringBuilder();
+        String line;
+        while ((line = rd.readLine()) != null) {
+            sb.append(line);
+        }
+        rd.close();
+
+        return sb.toString();
+    } 
+    
+    public String getPIDLocation(String a_handle, String version) throws IOException, HandleCreationException, KeyStoreException, NoSuchAlgorithmException, UnrecoverableKeyException, KeyManagementException, CertificateException, FileNotFoundException, InvalidKeySpecException, KeyManagementException {
+        String handle = a_handle;
+        logger.info("Getting location of handle: " + this.handlePrefix + "/" + handle);
+        String location = null;
+        JSONObject json = null;
+        
+        URL url = new URL(baseUri + this.handlePrefix + "/" + handle);
+        
+        HttpsURLConnection httpsUrlConnection = (HttpsURLConnection) url.openConnection();
+        httpsUrlConnection.setSSLSocketFactory(this.getFactory());
+        httpsUrlConnection.setRequestMethod("GET");
+        httpsUrlConnection.setDoInput(true);
+        httpsUrlConnection.setDoOutput(false);  
+//        httpsUrlConnection.setRequestProperty("Authorization", "Handle clientCert=\"true\"");
+        httpsUrlConnection.setRequestProperty("Content-Type", "application/json");
+        httpsUrlConnection.connect();
+        
+        
+        
+        switch (httpsUrlConnection.getResponseCode()) {
+            case HttpStatus.SC_OK:
+
+                String jsonString = getJsonString(httpsUrlConnection.getInputStream());
+//                System.out.println("###" + jsonString + "###");
+                JSONArray jsonArr = JSONArray.fromObject("[" + jsonString + "]");
+                json = jsonArr.getJSONObject(0);
+                location = json.getString("values");
+                
+                jsonArr = JSONArray.fromObject(location);
+                json = jsonArr.getJSONObject(0);
+                location = json.getString("data");
+                String ts = json.getString("timestamp");
+                
+                jsonArr = JSONArray.fromObject("[" + location + "]");
+                json = jsonArr.getJSONObject(0);
+                location = json.getString("value") + " cretaed on " + ts;
+                break;
+            case HttpStatus.SC_NOT_FOUND:
+                logger.warn("EPIC handle["+a_handle+"] doesn't exist[" + httpsUrlConnection.getResponseMessage()+"]");
+                break;
+            default:
+                logger.error("EPIC unexpected result[" + httpsUrlConnection.getResponseMessage()+"]");
+                throw new IOException("Handle retrieval failed["+a_handle+"]. Unexpected failure: " + httpsUrlConnection.getResponseMessage() + ". " + httpsUrlConnection.getContent());
+        }
+        
+        httpsUrlConnection.disconnect();
+        return location;
+    }
+    
     public String getPIDLocation( String a_handle) throws IOException{
 	Protocol easyhttps = null;
 	try {
