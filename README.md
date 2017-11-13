@@ -2,7 +2,7 @@
 A Java library and tool to interact with an EPIC v2 PID service.
 
 ## Version 2.0
-add version number "8" at the end of the command line
+add server version number "8" at the end of the command line to access the newer version of the tool
 
 ```sh
 $ mvn clean package
@@ -27,6 +27,11 @@ Configuration file for ver. 2 looks like
   <status>staging</status>
 </PIDService>
 ```
+--
+_NOTE_: ```sh openssl s_client -connect {HOSTNAME}:{PORT} -showcerts ```
+In case of selfsigned server certificate, use this command to get the server certificate and save it as a .crt file
+--
+
 
 ## Version 1.0
 ```sh
