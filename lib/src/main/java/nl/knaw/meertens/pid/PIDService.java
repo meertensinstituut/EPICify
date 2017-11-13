@@ -199,7 +199,7 @@ public class PIDService {
         httpsUrlConnection.setRequestProperty("Content-Type", "application/json");
         httpsUrlConnection.connect();
 
-        String payload = "{\"values\": [{\"index\":1,\"type\":\"URL\",\"data\": {\"format\": \"string\",\"value\":\"" + a_location + "\"}},{ \"index\":100,\"type\": \"HS_ADMIN\",\"data\": {\"format\": \"admin\",\"value\": {\"handle\": \"0.NA/" + handle + "\",\"index\": 200,\"permissions\": 011111110011}}}]}";
+        String payload = "{\"values\": [{\"index\":1,\"type\":\"URL\",\"data\": {\"format\": \"string\",\"value\":\"" + a_location + "\"}},{ \"index\":100,\"type\": \"HS_ADMIN\",\"data\": {\"format\": \"admin\",\"value\": {\"handle\": \"0.NA/" + this.handlePrefix + "\",\"index\": 200,\"permissions\": 011111110011}}}]}";
 
         OutputStreamWriter osw = new OutputStreamWriter(httpsUrlConnection.getOutputStream());
         osw.write(String.format(payload));
@@ -293,6 +293,43 @@ public class PIDService {
         return handle;
     }
 	
+    public void updateLocation(String a_handle, String a_location, String version)throws IOException, HandleCreationException, NoSuchAlgorithmException, KeyStoreException, FileNotFoundException, FileNotFoundException, CertificateException, UnrecoverableKeyException, KeyManagementException, KeyManagementException, InvalidKeySpecException, InvalidKeySpecException, InvalidKeySpecException, InvalidKeySpecException{
+        if (isTest) {
+            logger.info("[TESTMODE 8] Updated Handle=["+"PIDManager_"+ a_location+"] for location["+a_location+"]");
+            return;
+        }
+
+        String handle = this.handlePrefix + "/" + a_handle;
+        logger.info("Updating handle: " + handle);
+
+        URL url = new URL(baseUri + handle);
+        
+        HttpsURLConnection httpsUrlConnection = (HttpsURLConnection) url.openConnection();
+        httpsUrlConnection.setSSLSocketFactory(this.getFactory());
+        httpsUrlConnection.setRequestMethod("PUT");
+        httpsUrlConnection.setDoInput(true);
+        httpsUrlConnection.setDoOutput(true);  
+        httpsUrlConnection.setRequestProperty("Authorization", "Handle clientCert=\"true\"");
+        httpsUrlConnection.setRequestProperty("Content-Type", "application/json");
+        httpsUrlConnection.connect();
+
+        String payload = "{\"values\": [{\"index\":1,\"type\":\"URL\",\"data\": {\"format\": \"string\",\"value\":\"" + a_location + "\"}},{ \"index\":100,\"type\": \"HS_ADMIN\",\"data\": {\"format\": \"admin\",\"value\": {\"handle\": \"0.NA/" + this.handlePrefix + "\",\"index\": 200,\"permissions\": 011111110011}}}]}";
+
+        OutputStreamWriter osw = new OutputStreamWriter(httpsUrlConnection.getOutputStream());
+        osw.write(String.format(payload));
+        
+        osw.flush();
+        osw.close();
+
+        logger.info("Server response: " + httpsUrlConnection.getResponseCode() + httpsUrlConnection.getResponseMessage());
+
+        httpsUrlConnection.disconnect();
+        
+        logger.info( "Created handle["+handle+"] for location ["+a_location+"]");
+		
+        
+    }
+    
     public void updateLocation( String a_handle, String a_location)throws IOException, HandleCreationException{
         if (isTest) {
             logger.debug("[TESTMODE] Handled request location change for Handle=["+a_handle+"] to new location["+a_location+"] ... did nothing");

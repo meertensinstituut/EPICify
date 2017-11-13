@@ -133,19 +133,35 @@ public class Main {
                     }
                 }
             } else if (action.equals("upd")) {
-                if (args.length<4) {
-                    System.err.println("update handle: needs a handle and an uri!");
-                    System.exit(3);
+                if (version.equals("8")) {
+                    if (args.length<5) {
+                        System.err.println("update handle: needs a handle and an uri!");
+                        System.exit(3);
+                    }
+                    String hdl = args[2];
+                    String uri = args[3];
+                    ps.updateLocation(hdl,uri, version);
+                    String nw = ps.getPIDLocation(hdl);
+                    if (!nw.equals(uri)) {
+                        System.err.println("FATAL: failed to update handle["+hdl+"] to ["+uri+"]! It (still) refers to ["+nw+"].");
+                        System.exit(3);
+                    }
+                    System.err.println("updated handle: "+hdl+" -> "+uri);   
+                } else {
+                    if (args.length<4) {
+                        System.err.println("update handle: needs a handle and an uri!");
+                        System.exit(3);
+                    }
+                    String hdl = args[2];
+                    String uri = args[3];
+                    ps.updateLocation(hdl,uri);
+                    String nw = ps.getPIDLocation(hdl);
+                    if (!nw.equals(uri)) {
+                        System.err.println("FATAL: failed to update handle["+hdl+"] to ["+uri+"]! It (still) refers to ["+nw+"].");
+                        System.exit(3);
+                    }
+                    System.err.println("updated handle: "+hdl+" -> "+uri);
                 }
-                String hdl = args[2];
-                String uri = args[3];
-                ps.updateLocation(hdl,uri);
-                String nw = ps.getPIDLocation(hdl);
-                if (!nw.equals(uri)) {
-                    System.err.println("FATAL: failed to update handle["+hdl+"] to ["+uri+"]! It (still) refers to ["+nw+"].");
-                    System.exit(3);
-                }
-                System.err.println("updated handle: "+hdl+" -> "+uri);                    
             } else if (action.equals("del")) {
                 if (version.equals("8")) {
                     if (args.length<4) {
