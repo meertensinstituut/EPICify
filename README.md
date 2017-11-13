@@ -1,6 +1,34 @@
 # EPICify
 A Java library and tool to interact with an EPIC v2 PID service.
 
+## Version 2.0
+add version number "8" at the end of the command line
+
+```sh
+$ mvn clean package
+$ java -jar cli/target/epicify.jar
+java -jar epicify.jar <options>
+
+new handle   : <path to config> new <suffix>? <uri> 8
+get handle   : <path to config> get <prefix/suffix> 8
+update handle: <path to config> upd <prefix/suffix> <uri> 8
+delete handle: <path to config> del <prefix/suffix> 8
+               NOTE: there might be a nodelete policy active!
+```
+
+Configuration file for ver. 2 looks like
+```xml
+<PIDService>
+  <baseuri>https://[server:port]/api/handles/</baseuri>
+  <private_key>user_private_key.pem</private_key>
+  <server_certificate_only>server_certificate_if_selfsigned.crt</server_certificate_only>
+  <private_certificate>user_certificate.pem</private_certificate>
+  <HandlePrefix>11.T12345</HandlePrefix>
+  <status>staging</status>
+</PIDService>
+```
+
+## Version 1.0
 ```sh
 $ mvn clean package
 $ java -jar cli/target/epicify.jar 
