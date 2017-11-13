@@ -143,7 +143,7 @@ public class PIDService {
         // get predownloaded server certificate from file
         FileInputStream fis = new FileInputStream(this.serverCert);
         X509Certificate ca = (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(new BufferedInputStream(fis));
-
+        
         // init an empty keystore 
         /*NOTE: this keystore is not a Java Key Store
         // it is a container for keys and certs
@@ -325,7 +325,7 @@ public class PIDService {
 
         httpsUrlConnection.disconnect();
         
-        logger.info( "Created handle["+handle+"] for location ["+a_location+"]");
+        logger.info( "Updated handle["+handle+"] for location ["+a_location+"]");
 		
         
     }
