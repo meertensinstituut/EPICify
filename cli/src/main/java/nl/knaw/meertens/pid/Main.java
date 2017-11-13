@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.charset.Charset;
+import java.nio.charset.Charset;    
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,6 +34,7 @@ import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.apache.commons.httpclient.protocol.Protocol;
 
+import java.util.UUID;
 
 public class Main {
     
@@ -74,53 +75,115 @@ public class Main {
 
             XMLConfiguration xml = new XMLConfiguration(config);
             PIDService ps = new PIDService(xml,null);
-        
-            if (action.equals("new")) {
-                String suf = (args.length>3?args[2]:null);
-                String uri = (args.length>3?args[3]:args[2]);
-                if (uri==null) {
-                    System.err.println("new handle: needs a URI!");
-                    System.exit(3);
-                }
-                String hdl = suf==null?ps.requestHandle(uri):ps.requestHandle(suf,uri);
-                System.err.println("new handle: "+hdl+" -> "+uri);
-                System.out.println(hdl);
-            } else if (action.equals("get")) {
-                if (args.length<3) {
-                    System.err.println("get handle: needs a handle!");
-                    System.exit(3);
-                }
-                String hdl = args[2];
-                String uri = ps.getPIDLocation(hdl);
-                if (uri != null) {
-                    System.err.println("got handle: "+hdl+" -> "+uri);
-                    System.out.println(uri);
+            
+//            System.out.println(args.length);
+            String version = args[args.length-1].equals("8")?"8":"";
+            if (action.equals("new")) {                
+                
+                if (version.equals("8")) {
+                    String suf = (args.length>4?args[2]:null);
+                    String uri = (args.length>4?args[3]:args[2]);
+                    if (uri==null) {
+                        System.err.println("new handle: needs a URI!");
+                        System.exit(3);
+                    }
+                    String hdl = suf==null?ps.requestHandle(UUID.randomUUID().toString(), uri, version):ps.requestHandle(suf, uri, version);
+                    System.err.println("new handle: "+hdl+" -> "+uri);
+                    System.out.println(hdl);
                 } else {
-                    System.err.println("get handle: "+hdl+" -> doesn't exist!");
-                    System.exit(9);
-                }                    
+                    String suf = (args.length>3?args[2]:null);
+                    String uri = (args.length>3?args[3]:args[2]);
+                    if (uri==null) {
+                        System.err.println("new handle: needs a URI!");
+                        System.exit(3);
+                    }
+                    String hdl = suf==null?ps.requestHandle(uri):ps.requestHandle(suf,uri);
+                    System.err.println("new handle: "+hdl+" -> "+uri);
+                    System.out.println(hdl);
+                }
+
+            } else if (action.equals("get")) {
+                if (version.equals("8")) {
+                    if (args.length<4) {
+                        System.err.println("get handle: needs a handle!");
+                        System.exit(3);
+                    }
+                    String hdl = args[2];
+                    String uri = ps.getPIDLocation(hdl, version);
+                    if (uri != null) {
+                        System.err.println("got handle: "+hdl+" -> "+uri);
+                        System.out.println(uri);
+                    } else {
+                        System.err.println("get handle: "+hdl+" -> doesn't exist!");
+                        System.exit(9);
+                    }
+                } else {
+                    if (args.length<3) {
+                        System.err.println("get handle: needs a handle!");
+                        System.exit(3);
+                    }
+                    String hdl = args[2];
+                    String uri = ps.getPIDLocation(hdl);
+                    if (uri != null) {
+                        System.err.println("got handle: "+hdl+" -> "+uri);
+                        System.out.println(uri);
+                    } else {
+                        System.err.println("get handle: "+hdl+" -> doesn't exist!");
+                        System.exit(9);
+                    }
+                }
             } else if (action.equals("upd")) {
-                if (args.length<4) {
-                    System.err.println("update handle: needs a handle and an uri!");
-                    System.exit(3);
+                if (version.equals("8")) {
+                    if (args.length<5) {
+                        System.err.println("update handle: needs a handle and an uri!");
+                        System.exit(3);
+                    }
+                    String hdl = args[2];
+                    String uri = args[3];
+                    ps.updateLocation(hdl,uri, version);
+                    String nw = ps.getPIDLocation(hdl, version);
+                    if (!nw.equals(uri)) {
+                        System.err.println("FATAL: failed to update handle["+hdl+"] to ["+uri+"]! It (still) refers to ["+nw+"].");
+                        System.exit(3);
+                    }
+                    System.err.println("updated handle: "+hdl+" -> "+uri);   
+                } else {
+                    if (args.length<4) {
+                        System.err.println("update handle: needs a handle and an uri!");
+                        System.exit(3);
+                    }
+                    String hdl = args[2];
+                    String uri = args[3];
+                    ps.updateLocation(hdl,uri);
+                    String nw = ps.getPIDLocation(hdl);
+                    if (!nw.equals(uri)) {
+                        System.err.println("FATAL: failed to update handle["+hdl+"] to ["+uri+"]! It (still) refers to ["+nw+"].");
+                        System.exit(3);
+                    }
+                    System.err.println("updated handle: "+hdl+" -> "+uri);
                 }
-                String hdl = args[2];
-                String uri = args[3];
-                ps.updateLocation(hdl,uri);
-                String nw = ps.getPIDLocation(hdl);
-                if (!nw.equals(uri)) {
-                    System.err.println("FATAL: failed to update handle["+hdl+"] to ["+uri+"]! It (still) refers to ["+nw+"].");
-                    System.exit(3);
-                }
-                System.err.println("updated handle: "+hdl+" -> "+uri);                    
             } else if (action.equals("del")) {
-                if (args.length<3) {
-                    System.err.println("delete handle: needs a handle!");
-                    System.exit(3);
+                if (version.equals("8")) {
+                    if (args.length<4) {
+                        System.err.println("delete handle: needs a handle!");
+                        System.exit(3);
+                    }
+                    String hdl = args[2];
+                    Boolean deleted = ps.deleteHandle(hdl, version);
+                    if (deleted) {
+                        System.err.println("deleted handle: "+hdl); 
+                    } else {
+                        System.err.println("Error occured: "+hdl);
+                    }
+                } else {
+                    if (args.length<3) {
+                        System.err.println("delete handle: needs a handle!");
+                        System.exit(3);
+                    }
+                    String hdl = args[2];
+                    ps.deleteHandle(hdl);
+                    System.err.println("deleted handle: "+hdl);
                 }
-                String hdl = args[2];
-                ps.deleteHandle(hdl);
-                System.err.println("deleted handle: "+hdl);
             } else if (action.equals("csv")) {
                 if (args.length<3) {
                     System.err.println("csv action: needs a CSV file!");
