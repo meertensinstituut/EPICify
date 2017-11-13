@@ -28,8 +28,12 @@ Configuration file for ver. 2 looks like
 </PIDService>
 ```
 --
-_NOTE_: ```sh openssl s_client -connect {HOSTNAME}:{PORT} -showcerts ```
-In case of selfsigned server certificate, use this command to get the server certificate and save it as a .crt file
+_NOTE_:
+1) private_key, private_certificate are required
+2) In case of selfsigned server certificate, use this command to get the server certificate and save it as a .crt file 
+```sh 
+openssl s_client -connect {HOSTNAME}:{PORT} -showcerts 
+```
 --
 
 
