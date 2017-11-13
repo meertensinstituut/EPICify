@@ -141,9 +141,15 @@ public class PIDService {
         RSAPrivateKey key = generatePrivateKeyFromDER(clientPrivateKey);
         
         // get predownloaded server certificate from file
-        FileInputStream fis = new FileInputStream(this.serverCert);
-        X509Certificate ca = (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(new BufferedInputStream(fis));
-        
+        File fisFile = new File(this.serverCert);
+        boolean fisFileExist = fisFile.exists();
+        X509Certificate ca;
+        if (fisFileExist) {
+            FileInputStream fis = new FileInputStream(this.serverCert);
+            ca = (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(new BufferedInputStream(fis));
+        } else {
+            ca = cert;
+        }
         // init an empty keystore 
         /*NOTE: this keystore is not a Java Key Store
         // it is a container for keys and certs
@@ -158,7 +164,9 @@ public class PIDService {
         // adding client private key
         ks.setKeyEntry("key-alias", key, "".toCharArray(), new Certificate[] {cert});
         //addin server cert
-        ks.setCertificateEntry("server-cert", ca);
+        if (fisFileExist) {
+            ks.setCertificateEntry("server-cert", ca);
+        }
         /* end here*/
         
         // adding keystore to Jave Key Store
