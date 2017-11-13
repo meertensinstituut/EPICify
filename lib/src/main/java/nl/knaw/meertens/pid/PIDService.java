@@ -430,8 +430,6 @@ public class PIDService {
         httpsUrlConnection.setRequestProperty("Content-Type", "application/json");
         httpsUrlConnection.connect();
         
-        
-        
         switch (httpsUrlConnection.getResponseCode()) {
             case HttpStatus.SC_OK:
 
@@ -447,7 +445,7 @@ public class PIDService {
                 
                 jsonArr = JSONArray.fromObject("[" + location + "]");
                 json = jsonArr.getJSONObject(0);
-                location = json.getString("value") + " cretaed on " + ts;
+                location = json.getString("value");
                 break;
             case HttpStatus.SC_NOT_FOUND:
                 logger.warn("EPIC handle["+a_handle+"] doesn't exist[" + httpsUrlConnection.getResponseMessage()+"]");

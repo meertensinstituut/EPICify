@@ -141,8 +141,10 @@ public class Main {
                     String hdl = args[2];
                     String uri = args[3];
                     ps.updateLocation(hdl,uri, version);
-                    String nw = ps.getPIDLocation(hdl);
+                    String nw = ps.getPIDLocation(hdl, version);
                     if (!nw.equals(uri)) {
+                        System.out.println("nw" + nw);
+                        System.out.println("uri" + uri);
                         System.err.println("FATAL: failed to update handle["+hdl+"] to ["+uri+"]! It (still) refers to ["+nw+"].");
                         System.exit(3);
                     }
