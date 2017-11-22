@@ -76,6 +76,7 @@ public class PIDService {
     private final String serverCert;
     private final String clientCert;
     private final String baseUri;
+    private final String versionNumber;
     private boolean isTest = true;
     
     private final SSLContext ssl;
@@ -91,6 +92,7 @@ public class PIDService {
             throw new IllegalArgumentException("No EPIC configuration specified!");
         
         // do something with config
+        this.versionNumber = config.getString("Version");
         this.hostName = config.getString("hostName");
         this.host = config.getString("URI");
         this.handlePrefix = config.getString("HandlePrefix");
@@ -224,79 +226,84 @@ public class PIDService {
         return handle;
     }
     
-    public String requestHandle(String a_location) throws IOException, HandleCreationException{
+    public String requestHandle(String a_location) throws IOException, HandleCreationException, KeyStoreException, NoSuchAlgorithmException, UnrecoverableKeyException, KeyManagementException, CertificateException, FileNotFoundException, InvalidKeySpecException{
         return requestHandle(UUID.randomUUID().toString(), a_location);
     }
     
-    public String requestHandle(String uuid,String a_location) throws IOException, HandleCreationException{
-		
-        if (isTest) {
-            logger.info("[TESTMODE] Created Handle=["+"PIDManager_"+ a_location+"] for location["+a_location+"]");
-            return "PIDManager_"+ a_location;
-        }
-		
-        Protocol easyhttps = null;
-        try {
-            easyhttps = new Protocol("https", new EasySSLProtocolSocketFactory(ssl), 443);
-        } catch (Exception e){
-            logger.error("Problem configurating connection",e);
-            throw new IOException("Problem configurating connection");
-        }
-        String handle = this.handlePrefix + "/" + uuid;
-        logger.info("Requesting handle: " + handle);
-        URI uri = new URI(host + handle, true);
-		
-        HttpClient client = new HttpClient();
-        client.getState().setCredentials(
-            new AuthScope(this.hostName, 443, "realm"),
-            new UsernamePasswordCredentials(this.userName, this.password));
-        client.getParams().setAuthenticationPreemptive(true);
-        PutMethod httpput = new PutMethod( uri.getPathQuery());
-        httpput.setRequestHeader("Content-Type", "application/json");
-        HostConfiguration hc = new HostConfiguration();
-        hc.setHost(uri.getHost(), uri.getPort(), easyhttps);
-        httpput.setDoAuthentication(true);
-						
-        Map<String, Object> map = new HashMap<String, Object>();
-        map.put("idx", "1");
-        map.put("type", "URL");
-        map.put("parsed_data",a_location);
-        map.put( "timestamp", "" + System.currentTimeMillis());
-        map.put("refs","");
-        Map<String, Object> map2 = new HashMap<String, Object>();
-        map2.put("idx", "2");
-        map2.put("type", "EMAIL");
-        map2.put("parsed_data",this.email);
-        map2.put( "timestamp", System.currentTimeMillis());
-        map2.put("refs","");
-        String jsonStr = null;
-        try {
-            List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
-            list.add(map);
-            list.add(map2);
-            JSONArray a = JSONArray.fromObject(list);
-            jsonStr = a.toString();
-            logger.info(jsonStr);
-        } catch (JSONException e) {
-            logger.error("Unable to create JSON Request object",e);
-            throw new IOException( "Unable to create JSON Request object");
-        }
-		
-        httpput.setRequestEntity(new StringRequestEntity( jsonStr, "application/json","UTF-8"));
-				
-        try {
-            client.executeMethod(hc, httpput);
-            if (httpput.getStatusCode() != HttpStatus.SC_CREATED ) {
-                logger.error("EPIC unexpected result[" + httpput.getStatusLine().toString()+"]");
-                throw new HandleCreationException("Handle creation failed. Unexpected failure: " + httpput.getStatusLine().toString() + ". " + httpput.getResponseBodyAsString());
+    public String requestHandle(String uuid,String a_location) throws IOException, HandleCreationException, KeyStoreException, NoSuchAlgorithmException, UnrecoverableKeyException, KeyManagementException, CertificateException, FileNotFoundException, InvalidKeySpecException{
+	String handle = this.handlePrefix + "/" + uuid;
+        if (this.versionNumber.equals("8")) {
+            System.out.println("using version 8");
+            requestHandle(uuid, a_location, this.versionNumber);
+        } else {
+            if (isTest) {
+                logger.info("[TESTMODE] Created Handle=["+"PIDManager_"+ a_location+"] for location["+a_location+"]");
+                return "PIDManager_"+ a_location;
             }
-	} finally {
-            logger.debug("EPIC result["+httpput.getResponseBodyAsString()+"]");
-            httpput.releaseConnection();
-	}
-        
-        //A resolvable handle is returned using the global resolver
-        logger.info( "Created handle["+handle+"] for location ["+a_location+"]");
+
+            Protocol easyhttps = null;
+            try {
+                easyhttps = new Protocol("https", new EasySSLProtocolSocketFactory(ssl), 443);
+            } catch (Exception e){
+                logger.error("Problem configurating connection",e);
+                throw new IOException("Problem configurating connection");
+            }
+            //String handle = this.handlePrefix + "/" + uuid;
+            logger.info("Requesting handle: " + handle);
+            URI uri = new URI(host + handle, true);
+
+            HttpClient client = new HttpClient();
+            client.getState().setCredentials(
+                new AuthScope(this.hostName, 443, "realm"),
+                new UsernamePasswordCredentials(this.userName, this.password));
+            client.getParams().setAuthenticationPreemptive(true);
+            PutMethod httpput = new PutMethod( uri.getPathQuery());
+            httpput.setRequestHeader("Content-Type", "application/json");
+            HostConfiguration hc = new HostConfiguration();
+            hc.setHost(uri.getHost(), uri.getPort(), easyhttps);
+            httpput.setDoAuthentication(true);
+
+            Map<String, Object> map = new HashMap<String, Object>();
+            map.put("idx", "1");
+            map.put("type", "URL");
+            map.put("parsed_data",a_location);
+            map.put( "timestamp", "" + System.currentTimeMillis());
+            map.put("refs","");
+            Map<String, Object> map2 = new HashMap<String, Object>();
+            map2.put("idx", "2");
+            map2.put("type", "EMAIL");
+            map2.put("parsed_data",this.email);
+            map2.put( "timestamp", System.currentTimeMillis());
+            map2.put("refs","");
+            String jsonStr = null;
+            try {
+                List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
+                list.add(map);
+                list.add(map2);
+                JSONArray a = JSONArray.fromObject(list);
+                jsonStr = a.toString();
+                logger.info(jsonStr);
+            } catch (JSONException e) {
+                logger.error("Unable to create JSON Request object",e);
+                throw new IOException( "Unable to create JSON Request object");
+            }
+
+            httpput.setRequestEntity(new StringRequestEntity( jsonStr, "application/json","UTF-8"));
+
+            try {
+                client.executeMethod(hc, httpput);
+                if (httpput.getStatusCode() != HttpStatus.SC_CREATED ) {
+                    logger.error("EPIC unexpected result[" + httpput.getStatusLine().toString()+"]");
+                    throw new HandleCreationException("Handle creation failed. Unexpected failure: " + httpput.getStatusLine().toString() + ". " + httpput.getResponseBodyAsString());
+                }
+            } finally {
+                logger.debug("EPIC result["+httpput.getResponseBodyAsString()+"]");
+                httpput.releaseConnection();
+            }
+
+            //A resolvable handle is returned using the global resolver
+            logger.info( "Created handle["+handle+"] for location ["+a_location+"]");
+        }
 		
         return handle;
     }
@@ -338,75 +345,80 @@ public class PIDService {
         
     }
     
-    public void updateLocation( String a_handle, String a_location)throws IOException, HandleCreationException{
-        if (isTest) {
-            logger.debug("[TESTMODE] Handled request location change for Handle=["+a_handle+"] to new location["+a_location+"] ... did nothing");
-            return;
-        }
-        UUID uuid = UUID.randomUUID();
-        Protocol easyhttps = null;
-        try {
-            easyhttps = new Protocol("https", new EasySSLProtocolSocketFactory(), 443);
-	} catch(Exception e){
-            logger.error("Problem configurating connection",e);
-            throw new IOException("Problem configurating connection");
-        }
-		
-        URI uri = new URI(host + a_handle, true);		
-		
-        HttpClient client = new HttpClient();
-		
-        client.getState().setCredentials(
-            new AuthScope(this.hostName, 443, "realm"),
-            new UsernamePasswordCredentials(this.userName, this.password));
-        client.getParams().setAuthenticationPreemptive(true);
-        PutMethod httpput = new PutMethod( uri.getPathQuery());
-        httpput.setRequestHeader("Content-Type", "application/json");
-        HostConfiguration hc = new HostConfiguration();
-        hc.setHost(uri.getHost(), uri.getPort(), easyhttps);
-        httpput.setDoAuthentication(true);
-	
-        Map<String, Object> map = new HashMap<String, Object>();
-        map.put("idx", "1");
-        map.put("type", "URL");
-        map.put("parsed_data",a_location);
-        map.put( "timestamp", "" + System.currentTimeMillis());
-        map.put("refs","");
-        Map<String, Object> map2 = new HashMap<String, Object>();
-        map2.put("idx", "2");
-        map2.put("type", "EMAIL");
-        map2.put("parsed_data",this.email);
-        map2.put( "timestamp", System.currentTimeMillis());
-        map2.put("refs","");
-        String jsonStr = null;
-        try{
-            List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
-            list.add(map);
-            list.add(map2);
-            JSONArray a = JSONArray.fromObject(list);
-            jsonStr = a.toString();
-            logger.info(jsonStr);
-        }
-        catch( JSONException e){
-            logger.error("Unable to create JSON Request object",e);
-            throw new IOException("Unable to create JSON Request object");
-        }
-		
-        //System.out.println( jsonStr);
-        httpput.setRequestEntity(new StringRequestEntity( jsonStr, "application/json","UTF-8"));
-				
-        try {
-            client.executeMethod(hc, httpput);
-            if (httpput.getStatusCode() == HttpStatus.SC_NO_CONTENT) {
-                logger.info( "EPIC updated handle["+a_handle+"] for location ["+a_location+"]");
-            } else {
-                logger.error("EPIC unexpected result[" + httpput.getStatusLine().toString()+"]");
-                throw new HandleCreationException("Handle creation failed. Unexpected failure: " + httpput.getStatusLine().toString() + ". " + httpput.getResponseBodyAsString());
+    public void updateLocation( String a_handle, String a_location)throws IOException, HandleCreationException, NoSuchAlgorithmException, KeyStoreException, FileNotFoundException, CertificateException, UnrecoverableKeyException, KeyManagementException, InvalidKeySpecException{
+        if (this.versionNumber.equals("8")) {
+            System.out.println("using version 8");
+            updateLocation(a_handle, a_location, this.versionNumber);
+        } else {
+            if (isTest) {
+                logger.debug("[TESTMODE] Handled request location change for Handle=["+a_handle+"] to new location["+a_location+"] ... did nothing");
+                return;
             }
-	} finally {
-            logger.debug("EPIC result["+httpput.getResponseBodyAsString()+"]");
-            httpput.releaseConnection();
-	}
+            UUID uuid = UUID.randomUUID();
+            Protocol easyhttps = null;
+            try {
+                easyhttps = new Protocol("https", new EasySSLProtocolSocketFactory(), 443);
+            } catch(Exception e){
+                logger.error("Problem configurating connection",e);
+                throw new IOException("Problem configurating connection");
+            }
+
+            URI uri = new URI(host + a_handle, true);		
+
+            HttpClient client = new HttpClient();
+
+            client.getState().setCredentials(
+                new AuthScope(this.hostName, 443, "realm"),
+                new UsernamePasswordCredentials(this.userName, this.password));
+            client.getParams().setAuthenticationPreemptive(true);
+            PutMethod httpput = new PutMethod( uri.getPathQuery());
+            httpput.setRequestHeader("Content-Type", "application/json");
+            HostConfiguration hc = new HostConfiguration();
+            hc.setHost(uri.getHost(), uri.getPort(), easyhttps);
+            httpput.setDoAuthentication(true);
+
+            Map<String, Object> map = new HashMap<String, Object>();
+            map.put("idx", "1");
+            map.put("type", "URL");
+            map.put("parsed_data",a_location);
+            map.put( "timestamp", "" + System.currentTimeMillis());
+            map.put("refs","");
+            Map<String, Object> map2 = new HashMap<String, Object>();
+            map2.put("idx", "2");
+            map2.put("type", "EMAIL");
+            map2.put("parsed_data",this.email);
+            map2.put( "timestamp", System.currentTimeMillis());
+            map2.put("refs","");
+            String jsonStr = null;
+            try{
+                List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
+                list.add(map);
+                list.add(map2);
+                JSONArray a = JSONArray.fromObject(list);
+                jsonStr = a.toString();
+                logger.info(jsonStr);
+            }
+            catch( JSONException e){
+                logger.error("Unable to create JSON Request object",e);
+                throw new IOException("Unable to create JSON Request object");
+            }
+
+            //System.out.println( jsonStr);
+            httpput.setRequestEntity(new StringRequestEntity( jsonStr, "application/json","UTF-8"));
+
+            try {
+                client.executeMethod(hc, httpput);
+                if (httpput.getStatusCode() == HttpStatus.SC_NO_CONTENT) {
+                    logger.info( "EPIC updated handle["+a_handle+"] for location ["+a_location+"]");
+                } else {
+                    logger.error("EPIC unexpected result[" + httpput.getStatusLine().toString()+"]");
+                    throw new HandleCreationException("Handle creation failed. Unexpected failure: " + httpput.getStatusLine().toString() + ". " + httpput.getResponseBodyAsString());
+                }
+            } finally {
+                logger.debug("EPIC result["+httpput.getResponseBodyAsString()+"]");
+                httpput.releaseConnection();
+            }
+        }
     }
 	
     public String getJsonString(InputStream stream) throws IOException {
@@ -467,51 +479,57 @@ public class PIDService {
         return location;
     }
     
-    public String getPIDLocation( String a_handle) throws IOException{
-	Protocol easyhttps = null;
-	try {
-            easyhttps = new Protocol("https", new EasySSLProtocolSocketFactory(), 443);
-	} catch (Exception e){
-            logger.error("Problem configurating connection",e);
-            throw new IOException("Problem configurating connection");
-        }
-        URI uri = new URI(host + a_handle, true);
-		
-        HttpClient client = new HttpClient();
-        client.getState().setCredentials(
-            new AuthScope(this.hostName, 443, "realm"),
-            new UsernamePasswordCredentials(this.userName, this.password));
-        client.getParams().setAuthenticationPreemptive(true);
-        GetMethod httpGet = new GetMethod(uri.getPathQuery());
-        httpGet.setFollowRedirects(false);
-        httpGet.setQueryString(new NameValuePair[] { 
-            new NameValuePair("redirect", "no") 
-        }); 
-        httpGet.setRequestHeader("Accept", "application/json");
-        HostConfiguration hc = new HostConfiguration();
-        hc.setHost(uri.getHost(), uri.getPort(), easyhttps);
-        httpGet.setDoAuthentication(true);
-        String location = null;
-        JSONObject json = null;
-        try {
-            client.executeMethod(hc, httpGet);
-            switch (httpGet.getStatusCode()) {
-                case HttpStatus.SC_OK:
-                    logger.debug(httpGet.getResponseBodyAsString());
-                    JSONArray jsonArr = JSONArray.fromObject(httpGet.getResponseBodyAsString());
-                    json = jsonArr.getJSONObject(0);
-                    location = json.getString("parsed_data");
-                    break;
-                case HttpStatus.SC_NOT_FOUND:
-                    logger.warn("EPIC handle["+a_handle+"] doesn't exist[" + httpGet.getStatusLine().toString()+"]");
-                    break;
-                default:
-                    logger.error("EPIC unexpected result[" + httpGet.getStatusLine().toString()+"]");
-                    throw new IOException("Handle retrieval failed["+a_handle+"]. Unexpected failure: " + httpGet.getStatusLine().toString() + ". " + httpGet.getResponseBodyAsString());
+    public String getPIDLocation( String a_handle) throws IOException, HandleCreationException, KeyStoreException, NoSuchAlgorithmException, UnrecoverableKeyException, KeyManagementException, CertificateException, FileNotFoundException, InvalidKeySpecException{
+	String location = null;
+        if (this.versionNumber.equals("8")) {
+            System.out.println("using version 8");
+            location = getPIDLocation(a_handle, this.versionNumber);
+        } else {
+            Protocol easyhttps = null;
+            try {
+                easyhttps = new Protocol("https", new EasySSLProtocolSocketFactory(), 443);
+            } catch (Exception e){
+                logger.error("Problem configurating connection",e);
+                throw new IOException("Problem configurating connection");
             }
-        } finally {
-            logger.debug("EPIC result["+httpGet.getResponseBodyAsString()+"]");
-            httpGet.releaseConnection();
+            URI uri = new URI(host + a_handle, true);
+
+            HttpClient client = new HttpClient();
+            client.getState().setCredentials(
+                new AuthScope(this.hostName, 443, "realm"),
+                new UsernamePasswordCredentials(this.userName, this.password));
+            client.getParams().setAuthenticationPreemptive(true);
+            GetMethod httpGet = new GetMethod(uri.getPathQuery());
+            httpGet.setFollowRedirects(false);
+            httpGet.setQueryString(new NameValuePair[] { 
+                new NameValuePair("redirect", "no") 
+            }); 
+            httpGet.setRequestHeader("Accept", "application/json");
+            HostConfiguration hc = new HostConfiguration();
+            hc.setHost(uri.getHost(), uri.getPort(), easyhttps);
+            httpGet.setDoAuthentication(true);
+            //String location = null;
+            JSONObject json = null;
+            try {
+                client.executeMethod(hc, httpGet);
+                switch (httpGet.getStatusCode()) {
+                    case HttpStatus.SC_OK:
+                        logger.debug(httpGet.getResponseBodyAsString());
+                        JSONArray jsonArr = JSONArray.fromObject(httpGet.getResponseBodyAsString());
+                        json = jsonArr.getJSONObject(0);
+                        location = json.getString("parsed_data");
+                        break;
+                    case HttpStatus.SC_NOT_FOUND:
+                        logger.warn("EPIC handle["+a_handle+"] doesn't exist[" + httpGet.getStatusLine().toString()+"]");
+                        break;
+                    default:
+                        logger.error("EPIC unexpected result[" + httpGet.getStatusLine().toString()+"]");
+                        throw new IOException("Handle retrieval failed["+a_handle+"]. Unexpected failure: " + httpGet.getStatusLine().toString() + ". " + httpGet.getResponseBodyAsString());
+                }
+            } finally {
+                logger.debug("EPIC result["+httpGet.getResponseBodyAsString()+"]");
+                httpGet.releaseConnection();
+            }
         }
         return location;		
     }
@@ -528,40 +546,46 @@ public class PIDService {
         return url;
     }
     
-    public void deleteHandle(String a_handle) throws IOException {
-	Protocol easyhttps = null;
-	try {
-            easyhttps = new Protocol("https", new EasySSLProtocolSocketFactory(), 443);
-	} catch (Exception e){
-            logger.error("Problem configurating connection",e);
-            throw new IOException("Problem configurating connection");
-        }
-        URI uri = new URI(host + a_handle, true);
-        System.err.println("DBG: URI["+uri+"]");
-		
-        HttpClient client = new HttpClient();
-        client.getState().setCredentials(
-            new AuthScope(this.hostName, 443, "realm"),
-            new UsernamePasswordCredentials(this.userName, this.password));
-        client.getParams().setAuthenticationPreemptive(true);
-        DeleteMethod httpDel = new DeleteMethod(uri.getPathQuery());
-        httpDel.setFollowRedirects(false);
-        httpDel.setQueryString(new NameValuePair[] { 
-            new NameValuePair("redirect", "no") 
-        }); 
-        httpDel.setRequestHeader("Accept", "application/json");
-        HostConfiguration hc = new HostConfiguration();
-        hc.setHost(uri.getHost(), uri.getPort(), easyhttps);
-        httpDel.setDoAuthentication(true);
-        try {
-            client.executeMethod(hc, httpDel);
-            if (httpDel.getStatusCode() != HttpStatus.SC_NO_CONTENT) {
-                logger.error("EPIC unexpected result[" + httpDel.getStatusLine().toString()+"]");
-                throw new IOException("Handle retrieval failed["+a_handle+"]. Unexpected failure: " + httpDel.getStatusLine().toString() + ". " + httpDel.getResponseBodyAsString());
+    public void deleteHandle(String a_handle) throws IOException, MalformedURLException, NoSuchAlgorithmException, KeyStoreException, FileNotFoundException, CertificateException, UnrecoverableKeyException, KeyManagementException, InvalidKeySpecException {
+        
+        if (this.versionNumber.equals("8")) {
+            System.out.println("using version 8");
+            deleteHandle(a_handle, this.versionNumber);
+        } else {
+            Protocol easyhttps = null;
+            try {
+                easyhttps = new Protocol("https", new EasySSLProtocolSocketFactory(), 443);
+            } catch (Exception e){
+                logger.error("Problem configurating connection",e);
+                throw new IOException("Problem configurating connection");
             }
-        } finally {
-            logger.debug("EPIC result["+httpDel.getResponseBodyAsString()+"]");
-            httpDel.releaseConnection();
+            URI uri = new URI(host + a_handle, true);
+            System.err.println("DBG: URI["+uri+"]");
+
+            HttpClient client = new HttpClient();
+            client.getState().setCredentials(
+                new AuthScope(this.hostName, 443, "realm"),
+                new UsernamePasswordCredentials(this.userName, this.password));
+            client.getParams().setAuthenticationPreemptive(true);
+            DeleteMethod httpDel = new DeleteMethod(uri.getPathQuery());
+            httpDel.setFollowRedirects(false);
+            httpDel.setQueryString(new NameValuePair[] { 
+                new NameValuePair("redirect", "no") 
+            }); 
+            httpDel.setRequestHeader("Accept", "application/json");
+            HostConfiguration hc = new HostConfiguration();
+            hc.setHost(uri.getHost(), uri.getPort(), easyhttps);
+            httpDel.setDoAuthentication(true);
+            try {
+                client.executeMethod(hc, httpDel);
+                if (httpDel.getStatusCode() != HttpStatus.SC_NO_CONTENT) {
+                    logger.error("EPIC unexpected result[" + httpDel.getStatusLine().toString()+"]");
+                    throw new IOException("Handle retrieval failed["+a_handle+"]. Unexpected failure: " + httpDel.getStatusLine().toString() + ". " + httpDel.getResponseBodyAsString());
+                }
+            } finally {
+                logger.debug("EPIC result["+httpDel.getResponseBodyAsString()+"]");
+                httpDel.releaseConnection();
+            }
         }
     }
     
