@@ -461,7 +461,7 @@ public class PIDService {
                 jsonArr = JSONArray.fromObject(location);
                 json = jsonArr.getJSONObject(0);
                 location = json.getString("data");
-                String ts = json.getString("timestamp");
+                //String ts = json.getString("timestamp");
                 
                 jsonArr = JSONArray.fromObject("[" + location + "]");
                 json = jsonArr.getJSONObject(0);
