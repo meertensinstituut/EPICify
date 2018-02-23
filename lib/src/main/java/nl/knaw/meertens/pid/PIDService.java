@@ -435,11 +435,13 @@ public class PIDService {
     
     public String getPIDLocation(String a_handle, String version) throws IOException, HandleCreationException, KeyStoreException, NoSuchAlgorithmException, UnrecoverableKeyException, KeyManagementException, CertificateException, FileNotFoundException, InvalidKeySpecException, KeyManagementException {
         String handle = a_handle;
-        logger.info("Getting location of handle: " + this.handlePrefix + "/" + handle);
+        if (!handle.contains("/"))
+            handle = this.handlePrefix + "/" + handle;
+        logger.info("Getting location of handle: " + handle);
         String location = null;
         JSONObject json = null;
         
-        URL url = new URL(baseUri + this.handlePrefix + "/" + handle);
+        URL url = new URL(baseUri + handle);
         
         HttpsURLConnection httpsUrlConnection = (HttpsURLConnection) url.openConnection();
         httpsUrlConnection.setSSLSocketFactory(this.getFactory());
