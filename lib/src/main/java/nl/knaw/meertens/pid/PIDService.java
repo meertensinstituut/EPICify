@@ -225,8 +225,8 @@ public class PIDService {
 		
         return handle;
     }
-    
-    public String requestHandle(String a_location) throws IOException, HandleCreationException, KeyStoreException, NoSuchAlgorithmException, UnrecoverableKeyException, KeyManagementException, CertificateException, FileNotFoundException, InvalidKeySpecException{
+
+  public String requestHandle(String a_location) throws IOException, HandleCreationException, KeyStoreException, NoSuchAlgorithmException, UnrecoverableKeyException, KeyManagementException, CertificateException, FileNotFoundException, InvalidKeySpecException{
         return requestHandle(UUID.randomUUID().toString(), a_location);
     }
     
