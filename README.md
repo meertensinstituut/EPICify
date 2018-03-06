@@ -15,8 +15,8 @@ delete handle: <path to config> del <prefix/suffix>
 
 ## Handle v8 PID service
 
-```
 Configuration file for a Handle v8 PID service looks like
+
 ```xml
 <PIDService>
   <host>https://[server:port]/api/handles/</host>
@@ -32,7 +32,7 @@ _NOTES_:
 1) ```private_key```, ```private_certificate``` are required
 2) in case of selfsigned server certificate, use this command to get the server certificate and save it as a ```.crt``` file 
 ```sh 
-openssl s_client -connect [server:port] -showcerts 
+$ openssl s_client -connect [server:port] -showcerts 
 ```
 3) change ```test``` into ```production```
 
