@@ -75,7 +75,6 @@ public class PIDService {
     private final String privateKey;
     private final String serverCert;
     private final String clientCert;
-    private final String baseUri;
     private final String versionNumber;
     private boolean isTest = true;
     
@@ -92,20 +91,32 @@ public class PIDService {
             throw new IllegalArgumentException("No EPIC configuration specified!");
         
         // do something with config
-        this.versionNumber = config.getString("Version");
-        this.hostName = config.getString("hostName");
         this.host = config.getString("URI");
         this.handlePrefix = config.getString("HandlePrefix");
-        this.userName = config.getString("userName");
-        this.password = config.getString("password");
         this.email = config.getString("email");
-        this.privateKey = config.getString("private_key");
-        this.serverCert = config.getString("server_certificate_only");
-        this.clientCert = config.getString("private_certificate");
-        this.baseUri = config.getString("baseuri");
+        if (config.containsKey("private_key")) {
+            this.versionNumber = "8";
+            this.privateKey = config.getString("private_key");
+            this.serverCert = config.getString("server_certificate_only");
+            this.clientCert = config.getString("private_certificate");
+            // initialize EPIC 2 API props
+            this.hostName = null;
+            this.userName = null;
+            this.password = null;
+        } else {
+            this.versionNumber = "2";
+            this.hostName = config.getString("hostName");
+            this.userName = config.getString("userName");
+            this.password = config.getString("password");
+            // initialize Handle version 8 API props
+            this.privateKey = null;
+            this.serverCert = null;
+            this.clientCert = null;
+        }
+            
         this.isTest = config.getString("status") != null && config.getString("status").equals("test");
         
-        logger.debug((this.isTest?"test":"production")+" PIDService ["+this.host+"]["+this.handlePrefix+"]["+this.userName+":"+this.password+"]["+this.email+"]");
+        logger.debug((this.isTest?"test":"production")+" PIDService ["+this.versionNumber+"] ["+this.host+"]["+this.handlePrefix+"]"+(this.versionNumber.equals("8")?"["+this.privateKey+","+this.clientCert+","+this.serverCert+"]":"["+this.userName+"@"+this.hostName+":"+this.password+"]")+"["+this.email+"]");
     }
 
     protected static byte[] parseDERFromPEM(byte[] pem, String beginDelimiter, String endDelimiter) {
@@ -143,8 +154,11 @@ public class PIDService {
         RSAPrivateKey key = generatePrivateKeyFromDER(clientPrivateKey);
         
         // get predownloaded server certificate from file
-        File fisFile = new File(this.serverCert);
-        boolean fisFileExist = fisFile.exists();
+        boolean fisFileExist = false;
+        if (this.serverCert != null) {
+            File fisFile = new File(this.serverCert);
+            fisFileExist = fisFile.exists();
+        }
         X509Certificate ca;
         if (fisFileExist) {
             FileInputStream fis = new FileInputStream(this.serverCert);
@@ -198,7 +212,7 @@ public class PIDService {
         String handle = this.handlePrefix + "/" + uuid;
         logger.info("Requesting handle: " + handle);
 
-        URL url = new URL(baseUri + handle);
+        URL url = new URL(this.host + handle);
         
         HttpsURLConnection httpsUrlConnection = (HttpsURLConnection) url.openConnection();
         httpsUrlConnection.setSSLSocketFactory(this.getFactory());
@@ -209,7 +223,11 @@ public class PIDService {
         httpsUrlConnection.setRequestProperty("Content-Type", "application/json");
         httpsUrlConnection.connect();
 
-        String payload = "{\"values\": [{\"index\":1,\"type\":\"URL\",\"data\": {\"format\": \"string\",\"value\":\"" + a_location + "\"}},{ \"index\":100,\"type\": \"HS_ADMIN\",\"data\": {\"format\": \"admin\",\"value\": {\"handle\": \"0.NA/" + this.handlePrefix + "\",\"index\": 200,\"permissions\": 011111110011}}}]}";
+        String payload = "{\"values\": ["
+                       + "{\"index\":1,\"type\":\"URL\",\"data\": {\"format\": \"string\",\"value\":\"" + a_location + "\"}},"
+                       + (this.email!=null?"{\"index\":2,\"type\":\"EMAIL\",\"data\": {\"format\": \"string\",\"value\":\"" + this.email + "\"}},":"")
+                       + "{ \"index\":100,\"type\": \"HS_ADMIN\",\"data\": {\"format\": \"admin\",\"value\": {\"handle\": \"0.NA/" + this.handlePrefix + "\",\"index\": 200,\"permissions\": 011111110011}}}"
+                       + "]}";
 
         OutputStreamWriter osw = new OutputStreamWriter(httpsUrlConnection.getOutputStream());
         osw.write(String.format(payload));
@@ -250,7 +268,7 @@ public class PIDService {
             }
             //String handle = this.handlePrefix + "/" + uuid;
             logger.info("Requesting handle: " + handle);
-            URI uri = new URI(host + handle, true);
+            URI uri = new URI(this.host + handle, true);
 
             HttpClient client = new HttpClient();
             client.getState().setCredentials(
@@ -270,16 +288,19 @@ public class PIDService {
             map.put( "timestamp", "" + System.currentTimeMillis());
             map.put("refs","");
             Map<String, Object> map2 = new HashMap<String, Object>();
-            map2.put("idx", "2");
-            map2.put("type", "EMAIL");
-            map2.put("parsed_data",this.email);
-            map2.put( "timestamp", System.currentTimeMillis());
-            map2.put("refs","");
+            if (this.email!=null) {
+                map2.put("idx", "2");
+                map2.put("type", "EMAIL");
+                map2.put("parsed_data",this.email);
+                map2.put( "timestamp", System.currentTimeMillis());
+                map2.put("refs","");
+            }
             String jsonStr = null;
             try {
                 List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
                 list.add(map);
-                list.add(map2);
+                if (this.email!=null)
+                    list.add(map2);
                 JSONArray a = JSONArray.fromObject(list);
                 jsonStr = a.toString();
                 logger.info(jsonStr);
@@ -317,7 +338,7 @@ public class PIDService {
         String handle = this.handlePrefix + "/" + a_handle;
         logger.info("Updating handle: " + handle);
 
-        URL url = new URL(baseUri + handle);
+        URL url = new URL(this.host + handle);
         
         HttpsURLConnection httpsUrlConnection = (HttpsURLConnection) url.openConnection();
         httpsUrlConnection.setSSLSocketFactory(this.getFactory());
@@ -328,7 +349,11 @@ public class PIDService {
         httpsUrlConnection.setRequestProperty("Content-Type", "application/json");
         httpsUrlConnection.connect();
 
-        String payload = "{\"values\": [{\"index\":1,\"type\":\"URL\",\"data\": {\"format\": \"string\",\"value\":\"" + a_location + "\"}},{ \"index\":100,\"type\": \"HS_ADMIN\",\"data\": {\"format\": \"admin\",\"value\": {\"handle\": \"0.NA/" + this.handlePrefix + "\",\"index\": 200,\"permissions\": 011111110011}}}]}";
+        String payload = "{\"values\": ["
+                       + "{\"index\":1,\"type\":\"URL\",\"data\": {\"format\": \"string\",\"value\":\"" + a_location + "\"}},"
+                       + (this.email!=null?"{\"index\":2,\"type\":\"EMAIL\",\"data\": {\"format\": \"string\",\"value\":\"" + this.email + "\"}},":"")
+                       + "{ \"index\":100,\"type\": \"HS_ADMIN\",\"data\": {\"format\": \"admin\",\"value\": {\"handle\": \"0.NA/" + this.handlePrefix + "\",\"index\": 200,\"permissions\": 011111110011}}}"
+                       + "]}";
 
         OutputStreamWriter osw = new OutputStreamWriter(httpsUrlConnection.getOutputStream());
         osw.write(String.format(payload));
@@ -384,16 +409,19 @@ public class PIDService {
             map.put( "timestamp", "" + System.currentTimeMillis());
             map.put("refs","");
             Map<String, Object> map2 = new HashMap<String, Object>();
-            map2.put("idx", "2");
-            map2.put("type", "EMAIL");
-            map2.put("parsed_data",this.email);
-            map2.put( "timestamp", System.currentTimeMillis());
-            map2.put("refs","");
+            if (this.email!=null) {
+                map2.put("idx", "2");
+                map2.put("type", "EMAIL");
+                map2.put("parsed_data",this.email);
+                map2.put( "timestamp", System.currentTimeMillis());
+                map2.put("refs","");
+            }
             String jsonStr = null;
             try{
                 List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
                 list.add(map);
-                list.add(map2);
+                if (this.email!=null)
+                    list.add(map2);
                 JSONArray a = JSONArray.fromObject(list);
                 jsonStr = a.toString();
                 logger.info(jsonStr);
@@ -441,7 +469,7 @@ public class PIDService {
         String location = null;
         JSONObject json = null;
         
-        URL url = new URL(baseUri + handle);
+        URL url = new URL(this.host + handle);
         
         HttpsURLConnection httpsUrlConnection = (HttpsURLConnection) url.openConnection();
         httpsUrlConnection.setSSLSocketFactory(this.getFactory());
@@ -595,7 +623,7 @@ public class PIDService {
         String handle = a_handle;
         logger.info("Deleting handle: " + this.handlePrefix + "/" + handle);
         
-        URL url = new URL(baseUri + this.handlePrefix + "/" + handle);
+        URL url = new URL(this.host + this.handlePrefix + "/" + handle);
         
         HttpsURLConnection httpsUrlConnection = (HttpsURLConnection) url.openConnection();
         httpsUrlConnection.setSSLSocketFactory(this.getFactory());
