@@ -36,7 +36,7 @@ $ openssl s_client -connect [server:port] -showcerts
 ```
 3) change ```test``` into ```production```
 
---
+---
 
 ## EPIC v2 PID service
 
@@ -57,10 +57,10 @@ Where a config looks like this:
 _NOTES_:
 1) change ```test``` into ```production```
 
---
+---
 
 _NOTE_: EPICify is based on work by Jan Pieter Kunst and others @ http://www.meertens.knaw.nl/ontwikkeling
 
---
+---
 
 [epicify](http://www.urbandictionary.com/define.php?term=Epicify) (3)
