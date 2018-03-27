@@ -210,7 +210,7 @@ public class PIDService {
         }
 
         String handle = this.handlePrefix + "/" + uuid;
-        logger.info("Requesting handle: " + handle);
+        logger.debug("Requesting handle: " + handle);
 
         URL url = new URL(this.host + handle);
         
@@ -235,7 +235,7 @@ public class PIDService {
         osw.flush();
         osw.close();
 
-        logger.info("Server response: " + httpsUrlConnection.getResponseCode() + httpsUrlConnection.getResponseMessage());
+        logger.debug("Server response: " + httpsUrlConnection.getResponseCode() + " " + httpsUrlConnection.getResponseMessage());
 
         httpsUrlConnection.disconnect();
         
@@ -251,7 +251,6 @@ public class PIDService {
     public String requestHandle(String uuid,String a_location) throws IOException, HandleCreationException, KeyStoreException, NoSuchAlgorithmException, UnrecoverableKeyException, KeyManagementException, CertificateException, FileNotFoundException, InvalidKeySpecException{
 	String handle = this.handlePrefix + "/" + uuid;
         if (this.versionNumber.equals("8")) {
-            System.out.println("using version 8");
             requestHandle(uuid, a_location, this.versionNumber);
         } else {
             if (isTest) {
@@ -267,7 +266,7 @@ public class PIDService {
                 throw new IOException("Problem configurating connection");
             }
             //String handle = this.handlePrefix + "/" + uuid;
-            logger.info("Requesting handle: " + handle);
+            logger.debug("Requesting handle: " + handle);
             URI uri = new URI(this.host + handle, true);
 
             HttpClient client = new HttpClient();
@@ -335,8 +334,11 @@ public class PIDService {
             return;
         }
 
-        String handle = this.handlePrefix + "/" + a_handle;
-        logger.info("Updating handle: " + handle);
+        String handle = a_handle;
+        if (!handle.contains("/"))
+            handle = this.handlePrefix + "/" + handle;
+        
+        logger.debug("Updating handle: " + handle);
 
         URL url = new URL(this.host + handle);
         
@@ -361,7 +363,7 @@ public class PIDService {
         osw.flush();
         osw.close();
 
-        logger.info("Server response: " + httpsUrlConnection.getResponseCode() + httpsUrlConnection.getResponseMessage());
+        logger.debug("Server response: " + httpsUrlConnection.getResponseCode() + " " + httpsUrlConnection.getResponseMessage());
 
         httpsUrlConnection.disconnect();
         
@@ -372,11 +374,10 @@ public class PIDService {
     
     public void updateLocation( String a_handle, String a_location)throws IOException, HandleCreationException, NoSuchAlgorithmException, KeyStoreException, FileNotFoundException, CertificateException, UnrecoverableKeyException, KeyManagementException, InvalidKeySpecException{
         if (this.versionNumber.equals("8")) {
-            System.out.println("using version 8");
             updateLocation(a_handle, a_location, this.versionNumber);
         } else {
             if (isTest) {
-                logger.debug("[TESTMODE] Handled request location change for Handle=["+a_handle+"] to new location["+a_location+"] ... did nothing");
+                logger.info("[TESTMODE] Handled request location change for Handle=["+a_handle+"] to new location["+a_location+"] ... did nothing");
                 return;
             }
             UUID uuid = UUID.randomUUID();
@@ -388,7 +389,7 @@ public class PIDService {
                 throw new IOException("Problem configurating connection");
             }
 
-            URI uri = new URI(host + a_handle, true);		
+            URI uri = new URI(this.host + a_handle, true);		
 
             HttpClient client = new HttpClient();
 
@@ -465,7 +466,7 @@ public class PIDService {
         String handle = a_handle;
         if (!handle.contains("/"))
             handle = this.handlePrefix + "/" + handle;
-        logger.info("Getting location of handle: " + handle);
+        logger.debug("Getting location of handle: " + handle);
         String location = null;
         JSONObject json = null;
         
@@ -512,7 +513,6 @@ public class PIDService {
     public String getPIDLocation( String a_handle) throws IOException, HandleCreationException, KeyStoreException, NoSuchAlgorithmException, UnrecoverableKeyException, KeyManagementException, CertificateException, FileNotFoundException, InvalidKeySpecException{
 	String location = null;
         if (this.versionNumber.equals("8")) {
-            System.out.println("using version 8");
             location = getPIDLocation(a_handle, this.versionNumber);
         } else {
             Protocol easyhttps = null;
@@ -567,7 +567,7 @@ public class PIDService {
     public URL makeActionable( String a_PID){
         URL url = null;
         try {
-            url = new URL( "http://hdl.handle.net/" + a_PID);
+            url = new URL( "https://hdl.handle.net/" + a_PID);
         } catch (MalformedURLException e) {
             logger.error("couldn't make PID actionable",e);
             //do nothing
@@ -579,7 +579,6 @@ public class PIDService {
     public void deleteHandle(String a_handle) throws IOException, MalformedURLException, NoSuchAlgorithmException, KeyStoreException, FileNotFoundException, CertificateException, UnrecoverableKeyException, KeyManagementException, InvalidKeySpecException {
         
         if (this.versionNumber.equals("8")) {
-            System.out.println("using version 8");
             deleteHandle(a_handle, this.versionNumber);
         } else {
             Protocol easyhttps = null;
@@ -590,7 +589,6 @@ public class PIDService {
                 throw new IOException("Problem configurating connection");
             }
             URI uri = new URI(host + a_handle, true);
-            System.err.println("DBG: URI["+uri+"]");
 
             HttpClient client = new HttpClient();
             client.getState().setCredentials(
@@ -621,7 +619,7 @@ public class PIDService {
     
     public Boolean deleteHandle(String a_handle, String version) throws MalformedURLException, IOException, NoSuchAlgorithmException, KeyStoreException, FileNotFoundException, CertificateException, UnrecoverableKeyException, KeyManagementException, InvalidKeySpecException {
         String handle = a_handle;
-        logger.info("Deleting handle: " + this.handlePrefix + "/" + handle);
+        logger.debug("Deleting handle: " + this.handlePrefix + "/" + handle);
         
         URL url = new URL(this.host + this.handlePrefix + "/" + handle);
         
