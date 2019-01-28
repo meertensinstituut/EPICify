@@ -577,10 +577,15 @@ public class PIDService {
     }
     
     public void deleteHandle(String a_handle) throws IOException, MalformedURLException, NoSuchAlgorithmException, KeyStoreException, FileNotFoundException, CertificateException, UnrecoverableKeyException, KeyManagementException, InvalidKeySpecException {
-        
         if (this.versionNumber.equals("8")) {
             deleteHandle(a_handle, this.versionNumber);
         } else {
+            
+            if (isTest) {
+                logger.info("[TESTMODE] Handled request delete for Handle=["+a_handle+"] ... did nothing");
+                return;
+            }
+            
             Protocol easyhttps = null;
             try {
                 easyhttps = new Protocol("https", new EasySSLProtocolSocketFactory(), 443);
@@ -617,7 +622,11 @@ public class PIDService {
         }
     }
     
-    public Boolean deleteHandle(String a_handle, String version) throws MalformedURLException, IOException, NoSuchAlgorithmException, KeyStoreException, FileNotFoundException, CertificateException, UnrecoverableKeyException, KeyManagementException, InvalidKeySpecException {
+    public void deleteHandle(String a_handle, String version) throws MalformedURLException, IOException, NoSuchAlgorithmException, KeyStoreException, FileNotFoundException, CertificateException, UnrecoverableKeyException, KeyManagementException, InvalidKeySpecException {
+        if (isTest) {
+            logger.info("[TESTMODE] Handled request delete for Handle=["+a_handle+"] ... did nothing");
+            return;
+        }
         String handle = a_handle;
         logger.debug("Deleting handle: " + this.handlePrefix + "/" + handle);
         
@@ -631,18 +640,17 @@ public class PIDService {
         httpsUrlConnection.setRequestProperty("Authorization", "Handle clientCert=\"true\"");
         httpsUrlConnection.setRequestProperty("Content-Type", "application/json");
         httpsUrlConnection.setRequestProperty("Accept", "application/json");
-        httpsUrlConnection.connect();
         
-        int responseCode = httpsUrlConnection.getResponseCode();
-        
-        switch (responseCode) {
-            case HttpStatus.SC_OK:
-                httpsUrlConnection.disconnect();
-                return true;
-            default:
-                logger.error("EPIC unexpected result[" + responseCode + ": " + httpsUrlConnection.getResponseMessage()+"]");
-                httpsUrlConnection.disconnect();
-                return false;
+        try {
+            httpsUrlConnection.connect();
+            int responseCode = httpsUrlConnection.getResponseCode();
+            if (responseCode!=HttpStatus.SC_OK) {
+                    logger.error("EPIC unexpected result[" +httpsUrlConnection.getResponseMessage()+ "]");
+                    throw new IOException("Handle retrieval failed["+a_handle+"]. Unexpected failure: " + httpsUrlConnection.getResponseMessage() + ". " + httpsUrlConnection.getContent().toString());
+            }
+        } finally {
+            logger.debug("EPIC result["+ httpsUrlConnection.getContent().toString()+"]");
+            httpsUrlConnection.disconnect();
         }
         
     }
