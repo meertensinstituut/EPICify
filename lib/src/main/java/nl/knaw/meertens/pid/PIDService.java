@@ -283,7 +283,12 @@ public class PIDService {
     }
     
     public void deleteHandle(String a_handle) throws IOException {
-	Protocol easyhttps = null;
+        if (isTest) {
+            logger.info("[TESTMODE] Handled request delete for Handle=["+a_handle+"] ... did nothing");
+            return;
+        }
+
+        Protocol easyhttps = null;
 	try {
             easyhttps = new Protocol("https", new EasySSLProtocolSocketFactory(), 443);
 	} catch (Exception e){
