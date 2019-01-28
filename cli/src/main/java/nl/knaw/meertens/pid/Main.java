@@ -169,11 +169,11 @@ public class Main {
                         System.exit(3);
                     }
                     String hdl = args[2];
-                    Boolean deleted = ps.deleteHandle(hdl, version);
-                    if (deleted) {
+                    try {
+                        ps.deleteHandle(hdl, version);
                         System.err.println("deleted handle: "+hdl); 
-                    } else {
-                        System.err.println("Error occured: "+hdl);
+                    } catch(IOException x) {
+                        System.err.println("Error occured: "+x);
                     }
                 } else {
                     if (args.length<3) {
