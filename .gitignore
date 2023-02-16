@@ -3,7 +3,12 @@
 *.swp
 # not to share the config on web
 testkey.xml
+huygens.xml
 clarin-epic-config.xml
+
+# key file
+######################
+admpriv.bin
 
 # OS generated files #
 ######################
@@ -44,3 +49,7 @@ Thumbs.db
 *.so
 /lib/target/
 /cli/target/
+
+# IDE related
+###################
+.idea
