@@ -226,6 +226,10 @@ public class Main {
                     } else
                         System.err.println("CSV["+csv.getAbsolutePath()+"]["+l+"] "+(nw?"new":"updated")+" handle: "+hdl+" -> "+loc);
                 }
+            } else if (action.equals("huygens")) {
+                ps = new PIDService(xml);
+                String results = ps.getPIDLocation(args[2], true);
+                System.out.println(results);
             } else {
                 System.err.println("Unknown action!");
                 System.exit(4);

@@ -1,5 +1,7 @@
 package nl.knaw.meertens.pid;
 
+import nl.knaw.huygens.persistence.PersistenceException;
+import nl.knaw.huygens.persistence.HandleManager;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -12,6 +14,7 @@ import java.io.InputStreamReader;
 
 import java.io.OutputStreamWriter;
 
+import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -28,11 +31,7 @@ import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -44,6 +43,7 @@ import net.sf.json.JSONException;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
+import nl.knaw.huygens.persistence.PersistenceManagerCreationException;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.XMLConfiguration;
 import org.apache.commons.httpclient.HostConfiguration;
@@ -77,16 +77,46 @@ public class PIDService {
     private final String clientCert;
     private final String versionNumber;
     private boolean isTest = true;
-    
     private final SSLContext ssl;
+
+    // Huygens handle server specific
+    private final String cypher;
+    private final String namingAuthority;
+    private final String prefix;
+    private final String secretKey;
+    private boolean isHuygens;
+
+    public PIDService(XMLConfiguration config) {
+        this.cypher = config.getString("cypher");
+        this.namingAuthority = config.getString("namingAuthority");
+        this.prefix = config.getString("prefix");
+        this.secretKey = config.getString("privateKey");
+        // requuired but not used
+        this.versionNumber = "8";
+        this.privateKey = null;
+        this.serverCert = null;
+        this.clientCert = null;
+        this.hostName = null;
+        this.userName = null;
+        this.password = null;
+        this.host = null;
+        this.handlePrefix = null;
+        this.email = null;
+        this.ssl = null;
+    }
 	
-    public PIDService(SSLContext ssl) throws ConfigurationException{
+    public PIDService(SSLContext ssl) throws ConfigurationException, IllegalAccessException {
         this(new XMLConfiguration("config.xml"), ssl);
     }
 	
-    public PIDService(XMLConfiguration config, SSLContext ssl) throws ConfigurationException{	
+    public PIDService(XMLConfiguration config, SSLContext ssl) throws ConfigurationException, IllegalAccessException {
         this.ssl = ssl;
-        
+
+        this.cypher = null;
+        this.namingAuthority = null;
+        this.prefix = null;
+        this.secretKey = null;
+
         if( config == null)
             throw new IllegalArgumentException("No EPIC configuration specified!");
         
@@ -113,10 +143,9 @@ public class PIDService {
             this.serverCert = null;
             this.clientCert = null;
         }
-            
-        this.isTest = config.getString("status") != null && config.getString("status").equals("test");
-        
-        logger.debug((this.isTest?"test":"production")+" PIDService ["+this.versionNumber+"] ["+this.host+"]["+this.handlePrefix+"]"+(this.versionNumber.equals("8")?"["+this.privateKey+","+this.clientCert+","+this.serverCert+"]":"["+this.userName+"@"+this.hostName+":"+this.password+"]")+"["+this.email+"]");
+
+        this.isTest = !Objects.equals(config.getString("status"), "");
+
     }
 
     protected static byte[] parseDERFromPEM(byte[] pem, String beginDelimiter, String endDelimiter) {
@@ -461,7 +490,20 @@ public class PIDService {
 
         return sb.toString();
     } 
-    
+
+    public String getPIDLocation(String handleValue, Boolean isHuygens) throws PersistenceManagerCreationException, PersistenceException {
+        isHuygens = true;
+        this.isHuygens = true;
+        if (isHuygens) {
+            HandleManager handleManager = HandleManager.newHandleManager(
+                this.cypher, this.namingAuthority, this.prefix, this.secretKey);
+
+            logger.info("getting remote handle value: " + handleValue);
+            return handleManager.getPersistedURL(handleValue);
+        }
+        logger.info("not huygens, returning null");
+        return null;
+    }
     public String getPIDLocation(String a_handle, String version) throws IOException, HandleCreationException, KeyStoreException, NoSuchAlgorithmException, UnrecoverableKeyException, KeyManagementException, CertificateException, FileNotFoundException, InvalidKeySpecException, KeyManagementException {
         String handle = a_handle;
         if (!handle.contains("/"))
