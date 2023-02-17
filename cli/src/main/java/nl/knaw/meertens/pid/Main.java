@@ -4,7 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.charset.Charset;    
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -201,7 +202,7 @@ public class Main {
                     System.exit(3);
                 }
                 String prefix = xml.getString("HandlePrefix");
-                List<String> lines=Files.readAllLines(csv.toPath(), Charset.forName("UTF-8"));
+                List<String> lines=Files.readAllLines(csv.toPath(), StandardCharsets.UTF_8);
                 int l =0;
                 for(String line:lines){
                     l++;

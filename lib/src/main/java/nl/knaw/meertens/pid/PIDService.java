@@ -84,7 +84,6 @@ public class PIDService {
     private final String namingAuthority;
     private final String prefix;
     private final String secretKey;
-    private boolean isHuygens;
 
     public PIDService(XMLConfiguration config) {
         this.cypher = config.getString("cypher");
@@ -492,14 +491,37 @@ public class PIDService {
     } 
 
     public String getPIDLocation(String handleValue, Boolean isHuygens) throws PersistenceManagerCreationException, PersistenceException {
-        isHuygens = true;
-        this.isHuygens = true;
+        logger.debug("isHuygens: " + isHuygens);
         if (isHuygens) {
+            String urlToBeStored = "https://www.huygens.knaw.nl/projecten/ecodicesnl/";
             HandleManager handleManager = HandleManager.newHandleManager(
                 this.cypher, this.namingAuthority, this.prefix, this.secretKey);
 
-            logger.info("getting remote handle value: " + handleValue);
-            return handleManager.getPersistedURL(handleValue);
+            // get
+            String persistedUrl = handleManager.getPersistedURL(handleValue);
+            logger.info("get ok: " + persistedUrl);
+            if (!Objects.equals(persistedUrl, "")) {
+                // delete
+                try {
+                    handleManager.deletePersistentId(handleValue);
+                    logger.info("delete ok");
+                } catch (Exception ex) {
+                    logger.error("cannot delete " + handleValue);
+                }
+            }
+            // create
+            String id = handleManager.persistURL(urlToBeStored);
+            logger.info("create ok " + id);
+            // update
+            handleManager.modifyURLForPersistentId(handleValue, urlToBeStored);
+            logger.info("update ok: " + handleValue);
+
+            //clean up
+            handleManager.deletePersistentId(handleValue);
+            handleManager.deletePersistentId(id);
+
+            logger.info("clean up ok");
+            return "finished";
         }
         logger.info("not huygens, returning null");
         return null;
