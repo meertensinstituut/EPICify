@@ -14,7 +14,6 @@ import java.io.InputStreamReader;
 
 import java.io.OutputStreamWriter;
 
-import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -76,23 +75,21 @@ public class PIDService {
     private final String serverCert;
     private final String clientCert;
     private final String versionNumber;
+    final String namingAuthority;
     private boolean isTest = true;
     private final SSLContext ssl;
 
     // Huygens handle server specific
-    private final String cypher;
-    private final String namingAuthority;
-    private final String prefix;
-    private final String secretKey;
+    final String cypher;
+    final String prefix;
 
     public PIDService(XMLConfiguration config) {
         this.cypher = config.getString("cypher");
         this.namingAuthority = config.getString("namingAuthority");
         this.prefix = config.getString("prefix");
-        this.secretKey = config.getString("privateKey");
+        this.privateKey = config.getString("private_key");
         // requuired but not used
         this.versionNumber = "8";
-        this.privateKey = null;
         this.serverCert = null;
         this.clientCert = null;
         this.hostName = null;
@@ -103,18 +100,13 @@ public class PIDService {
         this.email = null;
         this.ssl = null;
     }
-	
-    public PIDService(SSLContext ssl) throws ConfigurationException, IllegalAccessException {
-        this(new XMLConfiguration("config.xml"), ssl);
-    }
-	
+
+//    public PIDService(SSLContext ssl) throws ConfigurationException, IllegalAccessException {
+//        this(new XMLConfiguration("config.xml"), ssl);
+//    }
+
     public PIDService(XMLConfiguration config, SSLContext ssl) throws ConfigurationException, IllegalAccessException {
         this.ssl = ssl;
-
-        this.cypher = null;
-        this.namingAuthority = null;
-        this.prefix = null;
-        this.secretKey = null;
 
         if( config == null)
             throw new IllegalArgumentException("No EPIC configuration specified!");
@@ -124,15 +116,35 @@ public class PIDService {
         this.handlePrefix = config.getString("HandlePrefix");
         this.email = config.getString("email");
         if (config.containsKey("private_key")) {
-            this.versionNumber = "8";
-            this.privateKey = config.getString("private_key");
-            this.serverCert = config.getString("server_certificate_only");
-            this.clientCert = config.getString("private_certificate");
-            // initialize EPIC 2 API props
-            this.hostName = null;
-            this.userName = null;
-            this.password = null;
+            if (config.containsKey("Version") && config.getString("Version").equals("hi")) {
+                this.versionNumber = "hi";
+                this.privateKey = config.getString("private_key");
+                this.cypher = config.getString("private_key_cypher");
+                this.namingAuthority = config.getString("namingAuthority");
+                this.prefix = config.getString("HandlePrefix");
+                // initialize EPIC Huygens API props
+                this.hostName = null;
+                this.userName = null;
+                this.password = null;
+                this.serverCert = null;
+                this.clientCert = null;
+            }
+            else {
+                this.versionNumber = "8";
+                this.privateKey = config.getString("private_key");
+                this.serverCert = config.getString("server_certificate_only");
+                this.clientCert = config.getString("private_certificate");
+                // initialize EPIC 2 API props
+                this.hostName = null;
+                this.userName = null;
+                this.password = null;
+                this.namingAuthority = null;
+                this.cypher = null;
+                this.prefix = null;
+            }
+
         } else {
+            System.out.println("version 2 found");
             this.versionNumber = "2";
             this.hostName = config.getString("hostName");
             this.userName = config.getString("userName");
@@ -141,10 +153,17 @@ public class PIDService {
             this.privateKey = null;
             this.serverCert = null;
             this.clientCert = null;
+            this.namingAuthority = null;
+            this.cypher = null;
+            this.prefix = null;
         }
 
         this.isTest = !Objects.equals(config.getString("status"), "");
 
+    }
+
+    public String getVersionNumber() {
+        return this.versionNumber;
     }
 
     protected static byte[] parseDERFromPEM(byte[] pem, String beginDelimiter, String endDelimiter) {
@@ -227,7 +246,22 @@ public class PIDService {
 
         return sslContext.getSocketFactory();
     }
-    
+
+    /*
+    call to Huygens version of API (ver. hi)
+     */
+    public String requestHandle(String urlToBeStored, boolean isHuygens) throws PersistenceManagerCreationException, PersistenceException {
+        logger.info("creating handle for " + urlToBeStored);
+        if (isHuygens) {
+            HandleManager handleManager = HandleManager.newHandleManager(
+                    this.cypher, this.namingAuthority, this.prefix, this.privateKey);
+
+            return handleManager.persistURL(urlToBeStored);
+        }
+        logger.error("not huygens, returning null");
+        return null;
+    }
+
     /*
     call to new version of API (ver. 8)
     */
@@ -268,7 +302,7 @@ public class PIDService {
         httpsUrlConnection.disconnect();
         
         logger.info( "Created handle["+handle+"] for location ["+a_location+"]");
-		
+
         return handle;
     }
 
@@ -277,7 +311,7 @@ public class PIDService {
     }
     
     public String requestHandle(String uuid,String a_location) throws IOException, HandleCreationException, KeyStoreException, NoSuchAlgorithmException, UnrecoverableKeyException, KeyManagementException, CertificateException, FileNotFoundException, InvalidKeySpecException{
-	String handle = this.handlePrefix + "/" + uuid;
+        String handle = this.handlePrefix + "/" + uuid;
         if (this.versionNumber.equals("8")) {
             requestHandle(uuid, a_location, this.versionNumber);
         } else {
@@ -319,7 +353,7 @@ public class PIDService {
                 map2.put("idx", "2");
                 map2.put("type", "EMAIL");
                 map2.put("parsed_data",this.email);
-                map2.put( "timestamp", System.currentTimeMillis());
+                map2.put( "timestamp", String.valueOf(System.currentTimeMillis()));
                 map2.put("refs","");
             }
             String jsonStr = null;
@@ -352,10 +386,30 @@ public class PIDService {
             //A resolvable handle is returned using the global resolver
             logger.info( "Created handle["+handle+"] for location ["+a_location+"]");
         }
-		
+
         return handle;
     }
-	
+
+    public void updateLocation(String handleValue, String uri, boolean isHuygens) throws PersistenceManagerCreationException {
+        logger.debug("isHuygens: " + isHuygens);
+        logger.info("Updating location for handle: " + handleValue + " to " + uri);
+        if (isHuygens) {
+            HandleManager handleManager = HandleManager.newHandleManager(
+                    this.cypher, this.namingAuthority, this.prefix, this.privateKey);
+            // get rid of the prefix from handleValue, it is added automatically
+            if (handleValue.contains("/")) {
+                logger.info("handleValue contains /, removing prefix");
+                handleValue = handleValue.substring(handleValue.indexOf("/") + 1);
+            }
+            // updating the content of the handle
+            try {
+                handleManager.modifyURLForPersistentId(handleValue, uri);
+            } catch (PersistenceException e) {
+                throw new PersistenceManagerCreationException("Unable to update handle " + handleValue + " with new value " + uri, e);
+            }
+        }
+    }
+
     public void updateLocation(String a_handle, String a_location, String version)throws IOException, HandleCreationException, NoSuchAlgorithmException, KeyStoreException, FileNotFoundException, FileNotFoundException, CertificateException, UnrecoverableKeyException, KeyManagementException, KeyManagementException, InvalidKeySpecException, InvalidKeySpecException, InvalidKeySpecException, InvalidKeySpecException{
         if (isTest) {
             logger.info("[TESTMODE 8] Updated Handle=["+"PIDManager_"+ a_location+"] for location["+a_location+"]");
@@ -396,8 +450,8 @@ public class PIDService {
         httpsUrlConnection.disconnect();
         
         logger.info( "Updated handle["+handle+"] for location ["+a_location+"]");
-		
-        
+
+
     }
     
     public void updateLocation( String a_handle, String a_location)throws IOException, HandleCreationException, NoSuchAlgorithmException, KeyStoreException, FileNotFoundException, CertificateException, UnrecoverableKeyException, KeyManagementException, InvalidKeySpecException{
@@ -417,7 +471,7 @@ public class PIDService {
                 throw new IOException("Problem configurating connection");
             }
 
-            URI uri = new URI(this.host + a_handle, true);		
+            URI uri = new URI(this.host + a_handle, true);
 
             HttpClient client = new HttpClient();
 
@@ -435,14 +489,14 @@ public class PIDService {
             map.put("idx", "1");
             map.put("type", "URL");
             map.put("parsed_data",a_location);
-            map.put( "timestamp", "" + System.currentTimeMillis());
+            map.put("timestamp", String.valueOf(System.currentTimeMillis()));
             map.put("refs","");
             Map<String, Object> map2 = new HashMap<String, Object>();
             if (this.email!=null) {
                 map2.put("idx", "2");
                 map2.put("type", "EMAIL");
                 map2.put("parsed_data",this.email);
-                map2.put( "timestamp", System.currentTimeMillis());
+                map2.put( "timestamp", String.valueOf(System.currentTimeMillis()));
                 map2.put("refs","");
             }
             String jsonStr = null;
@@ -477,7 +531,7 @@ public class PIDService {
             }
         }
     }
-	
+
     public String getJsonString(InputStream stream) throws IOException {
         BufferedReader rd = new BufferedReader(new InputStreamReader(stream));
         StringBuilder sb = new StringBuilder();
@@ -490,42 +544,56 @@ public class PIDService {
         return sb.toString();
     } 
 
-    public String getPIDLocation(String handleValue, Boolean isHuygens) throws PersistenceManagerCreationException, PersistenceException {
+    public String getPIDLocation(String handleValue, boolean isHuygens) throws PersistenceManagerCreationException, PersistenceException {
         logger.debug("isHuygens: " + isHuygens);
+        logger.info("Getting location for handle: " + handleValue);
         if (isHuygens) {
-            String urlToBeStored = "https://www.huygens.knaw.nl/projecten/ecodicesnl/";
             HandleManager handleManager = HandleManager.newHandleManager(
-                this.cypher, this.namingAuthority, this.prefix, this.secretKey);
-
-            // get
-            String persistedUrl = handleManager.getPersistedURL(handleValue);
-            logger.info("get ok: " + persistedUrl);
-            if (!Objects.equals(persistedUrl, "")) {
-                // delete
-                try {
-                    handleManager.deletePersistentId(handleValue);
-                    logger.info("delete ok");
-                } catch (Exception ex) {
-                    logger.error("cannot delete " + handleValue);
-                }
+                this.cypher, this.namingAuthority, this.prefix, this.privateKey);
+            // get rid of the prefix from handleValue, it is added automatically
+            if (handleValue.contains("/")) {
+                logger.info("handleValue contains /, removing prefix");
+                handleValue = handleValue.substring(handleValue.indexOf("/") + 1);
             }
-            // create
-            String id = handleManager.persistURL(urlToBeStored);
-            logger.info("create ok " + id);
-            // update
-            handleManager.modifyURLForPersistentId(handleValue, urlToBeStored);
-            logger.info("update ok: " + handleValue);
-
-            //clean up
-            handleManager.deletePersistentId(handleValue);
-            handleManager.deletePersistentId(id);
-
-            logger.info("clean up ok");
-            return "finished";
+            // getting the content of the handle
+            try {
+                String result = handleManager.getPersistedURL(handleValue);
+                return result;
+            } catch (PersistenceException e) {
+                return null;
+            }
         }
-        logger.info("not huygens, returning null");
+        logger.error("not huygens, returning null");
         return null;
     }
+//    public String getPIDLocation(String handleValue, boolean isHuygens) throws PersistenceManagerCreationException, PersistenceException {
+//        logger.debug("isHuygens: " + isHuygens);
+//        logger.info("Getting location for handle: " + handleValue);
+//        if (isHuygens) {
+//            String urlToBeStored = "https://www.huygens.knaw.nl/projecten/ecodicesnl/";
+//            HandleManager handleManager = HandleManager.newHandleManager(
+//                this.cypher, this.namingAuthority, this.prefix, this.privateKey);
+//
+//            // create
+//            String id = handleManager.persistURL(urlToBeStored);
+//            logger.info("create ok " + id);
+//            // get
+//            String persistedUrl = handleManager.getPersistedURL(handleValue);
+//            logger.info("get ok: " + persistedUrl);
+//            // TODO: use http to the the result url
+//            // update
+//            handleManager.modifyURLForPersistentId(id, urlToBeStored);
+//            logger.info("update ok: " + id);
+//            // delete
+//            handleManager.deletePersistentId(id);
+//
+//            logger.info("clean up ok");
+//            return "finished";
+//        }
+//        logger.error("not huygens, returning null");
+//        return null;
+//    }
+
     public String getPIDLocation(String a_handle, String version) throws IOException, HandleCreationException, KeyStoreException, NoSuchAlgorithmException, UnrecoverableKeyException, KeyManagementException, CertificateException, FileNotFoundException, InvalidKeySpecException, KeyManagementException {
         String handle = a_handle;
         if (!handle.contains("/"))
@@ -574,8 +642,8 @@ public class PIDService {
         return location;
     }
     
-    public String getPIDLocation( String a_handle) throws IOException, HandleCreationException, KeyStoreException, NoSuchAlgorithmException, UnrecoverableKeyException, KeyManagementException, CertificateException, FileNotFoundException, InvalidKeySpecException{
-	String location = null;
+    public String getPIDLocation(String a_handle) throws IOException, HandleCreationException, KeyStoreException, NoSuchAlgorithmException, UnrecoverableKeyException, KeyManagementException, CertificateException, FileNotFoundException, InvalidKeySpecException{
+        String location = null;
         if (this.versionNumber.equals("8")) {
             location = getPIDLocation(a_handle, this.versionNumber);
         } else {
@@ -625,9 +693,9 @@ public class PIDService {
                 httpGet.releaseConnection();
             }
         }
-        return location;		
+        return location;
     }
-	
+
     public URL makeActionable( String a_PID){
         URL url = null;
         try {
@@ -685,7 +753,28 @@ public class PIDService {
             }
         }
     }
-    
+
+    public void deleteHandle(String handleValue, boolean isHuygens) throws Exception {
+        logger.debug("isHuygens: " + isHuygens);
+        logger.info("Deleting handle: " + handleValue);
+        if (isHuygens) {
+            HandleManager handleManager = HandleManager.newHandleManager(
+                    this.cypher, this.namingAuthority, this.prefix, this.privateKey);
+            // get rid of the prefix from handleValue, it is added automatically
+            if (handleValue.contains("/")) {
+                logger.info("handleValue contains /, removing prefix");
+                handleValue = handleValue.substring(handleValue.indexOf("/") + 1);
+            }
+            // delete
+            try {
+                handleManager.deletePersistentId(handleValue);
+            } catch (Exception e) {
+                throw new Exception("Error deleting handle: " + handleValue, e);
+            }
+        }
+
+    }
+
     public void deleteHandle(String a_handle, String version) throws MalformedURLException, IOException, NoSuchAlgorithmException, KeyStoreException, FileNotFoundException, CertificateException, UnrecoverableKeyException, KeyManagementException, InvalidKeySpecException {
         if (isTest) {
             logger.info("[TESTMODE] Handled request delete for Handle=["+a_handle+"] ... did nothing");

@@ -1,5 +1,5 @@
 # EPICify
-A Java library and tool to interact with an EPIC v2 or Handle v8 PID service.
+A Java library and tool to interact with an EPIC v2 or Handle v8 PID service or Huygens handle server.
 
 ```sh
 $ mvn clean package
@@ -11,6 +11,42 @@ get handle   : <path to config> get <prefix/suffix>
 update handle: <path to config> upd <prefix/suffix> <uri>
 delete handle: <path to config> del <prefix/suffix>
                NOTE: there might be a nodelete policy active!
+```
+
+## Huygens handle server
+Configuration file for a Huygens handle server looks like
+
+```xml
+<PIDService>
+  <Version>hi</Version>
+  <private_key>/location/to/key/file</private_key>
+  <private_key_cypher>super-secret</private_key_cypher>
+  <namingAuthority>Name.Auth</namingAuthority>
+  <HandlePrefix>111111</HandlePrefix>
+  <status>test</status> <!--not implemented yet in case of huygens server -->
+</PIDService>
+```
+
+### Sample commands
+To create a new handle:
+```sh
+$ java -jar cli/target/epicify.jar /path/to/config.xml new http://www.example.com
+```
+
+To get a handle:
+```sh
+$ java -jar cli/target/epicify.jar /path/to/config.xml get 12345/aa-bb-cc
+```
+note: prefix will be stripped out, for example, 12345/handle-id, will be converted to handle-id
+
+TO update a handle:
+```sh
+$ java -jar cli/target/epicify.jar /path/to/config.xml upd 12345/aa-bb-cc http://www.example.com
+```
+
+To delete a handle:
+```sh
+$ java -jar cli/target/epicify.jar /path/to/config.xml del 12345/aa-bb-cc
 ```
 
 ## Handle v8 PID service
