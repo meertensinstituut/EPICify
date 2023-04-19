@@ -277,15 +277,35 @@ public class Main {
                     String suffix = cols[0];
                     String uri = cols[1];
                     String hdl = prefix + "/" + suffix;
-                    String loc = ps.getPIDLocation(hdl);
+                    String loc;
+                    if (version.equals("hi")) {
+                        loc = ps.getPIDLocation(hdl, true); 
+                    } else {
+                        loc = ps.getPIDLocation(hdl);                        
+                    }
                     boolean nw = (loc == null);
                     if (nw) {
-                        ps.requestHandle(suffix, uri);
+                        if (version.equals("hi")) {
+                            hdl = ps.requestHandle(uri, true);
+                            //System.err.println("new hdl created: " + ps.prefix + "/" + hdl + " -> " + uri);
+                            System.out.println(ps.prefix + "/" + hdl);
+                        } else {
+                            hdl = ps.requestHandle(suffix, uri);
+                            //System.err.println("new hdl created: " + ps.prefix + "/" + hdl + " -> " + uri);
+                            System.out.println(ps.prefix + "/" + hdl);
+                        }
                     } else {
-                        ps.updateLocation(hdl, uri);
+                        if (version.equals("hi")) {
+                            ps.updateLocation(hdl, uri, true);
+                        } else
+                            ps.updateLocation(hdl, uri);
                     }
-                    loc = ps.getPIDLocation(hdl);
-                    if (!loc.equals(uri)) {
+                    if (version.equals("hi")) {
+                        loc = ps.getPIDLocation(hdl, true); 
+                    } else {
+                        loc = ps.getPIDLocation(hdl);                        
+                    }
+                    if (loc ==null || !loc.equals(uri)) {
                         System.err.println("ERROR: CSV[" + csv.getAbsolutePath() + "][" + l + "] failed to upsert handle[" + hdl + "] to [" + uri + "]! It (still) refers to [" + loc + "].");
                     } else
                         System.err.println("CSV[" + csv.getAbsolutePath() + "][" + l + "] " + (nw ? "new" : "updated") + " handle: " + hdl + " -> " + loc);
