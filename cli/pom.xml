@@ -11,11 +11,11 @@
             <artifactId>epicify-lib</artifactId>
             <version>${project.version}</version>
         </dependency>
-	<dependency>
+	    <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>1.2.0</version>
-	</dependency>
+	    </dependency>
     </dependencies>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -42,10 +42,25 @@
                             <descriptorRefs>
                                 <descriptorRef>jar-with-dependencies</descriptorRef>
                             </descriptorRefs>
-                            <finalName>epicify</finalName>
+                            <finalName>epicify-${version}</finalName>
                             <appendAssemblyId>false</appendAssemblyId>
                         </configuration>
                     </execution>
+                        <execution>
+                            <id>make-assembly</id> <!-- this is used for inheritance merges -->
+                            <phase>package</phase> <!-- bind to the packaging phase -->
+                            <goals>
+                                <goal>single</goal>
+                            </goals>
+                            <configuration>
+                                <finalName>epicify-${version}</finalName>
+                                <appendAssemblyId>false</appendAssemblyId>
+                                <descriptors>
+                                    <descriptor>assembly.xml</descriptor>
+                                </descriptors>
+                            </configuration>
+                        </execution>
+
                 </executions>
             </plugin>
         </plugins>

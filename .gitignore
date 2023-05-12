@@ -53,3 +53,4 @@ Thumbs.db
 # IDE related
 ###################
 .idea
+.vscode/settings.json

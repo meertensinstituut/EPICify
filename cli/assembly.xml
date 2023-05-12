@@ -1,0 +1,35 @@
+<assembly>
+  <id>deployment</id>
+  <formats>
+    <format>tar.gz</format>
+  </formats>
+  <includeBaseDirectory>false</includeBaseDirectory>
+  <fileSets>
+    <fileSet>
+      <directory>src/main/resources</directory>
+      <outputDirectory>resources</outputDirectory>
+      <includes>
+        <!-- Do include the log4j properties file in the resources directory
+         while excluding it from the jar. Please refer to the configuration of
+         the jar plugin in the POM -->
+        <include>log4j2.xml</include>
+      </includes>
+    </fileSet>
+    <fileSet>
+      <directory>src/main/scripts</directory>
+      <outputDirectory></outputDirectory>
+      <includes>
+    	  <include>epicify.sh</include>
+      </includes>
+      <fileMode>0755</fileMode>
+      <filtered>true</filtered>
+    </fileSet>		
+    <fileSet>
+      <directory>target</directory>
+      <outputDirectory></outputDirectory>
+      <includes>
+	    <include>epicify-${version}.jar</include>
+      </includes>
+    </fileSet>
+  </fileSets>
+</assembly>
