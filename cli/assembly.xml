@@ -9,10 +9,7 @@
       <directory>src/main/resources</directory>
       <outputDirectory>resources</outputDirectory>
       <includes>
-        <!-- Do include the log4j properties file in the resources directory
-         while excluding it from the jar. Please refer to the configuration of
-         the jar plugin in the POM -->
-        <include>log4j2.xml</include>
+        <include>logback.xml</include>
       </includes>
     </fileSet>
     <fileSet>

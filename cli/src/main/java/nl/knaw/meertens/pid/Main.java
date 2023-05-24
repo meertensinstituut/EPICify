@@ -8,13 +8,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.apache.commons.configuration.XMLConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
 
 public class Main {
 
+    private static final Logger logger = LoggerFactory.getLogger(Main.class.getName());
+
     public static void main(String[] args) {
 
+        logger.info("Starting EPIC CLI");
         try {
 
             if (args.length < 2) {
