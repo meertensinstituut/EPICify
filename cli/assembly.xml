@@ -6,13 +6,6 @@
   <includeBaseDirectory>false</includeBaseDirectory>
   <fileSets>
     <fileSet>
-      <directory>src/main/resources</directory>
-      <outputDirectory>resources</outputDirectory>
-      <includes>
-        <include>logback.xml</include>
-      </includes>
-    </fileSet>
-    <fileSet>
       <directory>src/main/scripts</directory>
       <outputDirectory></outputDirectory>
       <includes>

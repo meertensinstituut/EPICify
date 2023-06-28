@@ -63,7 +63,7 @@ import org.slf4j.LoggerFactory;
 
 public class PIDService {
     
-    private static final Logger logger = LoggerFactory.getLogger(PIDService.class.getName());
+    //private static final Logger logger = LoggerFactory.getLogger(PIDService.class.getName());
     
     private final String hostName;
     private final String host;
@@ -251,14 +251,14 @@ public class PIDService {
     call to Huygens version of API (ver. hi)
      */
     public String requestHandle(String urlToBeStored, boolean isHuygens) throws PersistenceManagerCreationException, PersistenceException {
-        logger.info("creating handle for " + urlToBeStored);
+       // logger.info("creating handle for " + urlToBeStored);
         if (isHuygens) {
             HandleManager handleManager = HandleManager.newHandleManager(
                     this.cypher, this.namingAuthority, this.prefix, this.privateKey);
 
             return handleManager.persistURL(urlToBeStored);
         }
-        logger.error("not huygens, returning null");
+        //logger.error("not huygens, returning null");
         return null;
     }
 
@@ -267,12 +267,12 @@ public class PIDService {
     */
     public String requestHandle(String uuid, String a_location, String version) throws IOException, HandleCreationException, KeyStoreException, NoSuchAlgorithmException, UnrecoverableKeyException, KeyManagementException, CertificateException, FileNotFoundException, InvalidKeySpecException{
         if (isTest) {
-            logger.info("[TESTMODE 8] Created Handle=["+"PIDManager_"+ a_location+"] for location["+a_location+"]");
+            //logger.info("[TESTMODE 8] Created Handle=["+"PIDManager_"+ a_location+"] for location["+a_location+"]");
             return "PIDManager_"+ a_location;
         }
 
         String handle = this.handlePrefix + "/" + uuid;
-        logger.debug("Requesting handle: " + handle);
+        //logger.debug("Requesting handle: " + handle);
 
         URL url = new URL(this.host + handle);
         
@@ -297,11 +297,11 @@ public class PIDService {
         osw.flush();
         osw.close();
 
-        logger.debug("Server response: " + httpsUrlConnection.getResponseCode() + " " + httpsUrlConnection.getResponseMessage());
+        //logger.debug("Server response: " + httpsUrlConnection.getResponseCode() + " " + httpsUrlConnection.getResponseMessage());
 
         httpsUrlConnection.disconnect();
         
-        logger.info( "Created handle["+handle+"] for location ["+a_location+"]");
+        //logger.info( "Created handle["+handle+"] for location ["+a_location+"]");
 
         return handle;
     }
@@ -316,7 +316,7 @@ public class PIDService {
             requestHandle(uuid, a_location, this.versionNumber);
         } else {
             if (isTest) {
-                logger.info("[TESTMODE] Created Handle=["+"PIDManager_"+ a_location+"] for location["+a_location+"]");
+                //logger.info("[TESTMODE] Created Handle=["+"PIDManager_"+ a_location+"] for location["+a_location+"]");
                 return "PIDManager_"+ a_location;
             }
 
@@ -324,11 +324,11 @@ public class PIDService {
             try {
                 easyhttps = new Protocol("https", new EasySSLProtocolSocketFactory(ssl), 443);
             } catch (Exception e){
-                logger.error("Problem configurating connection",e);
+                //logger.error("Problem configurating connection",e);
                 throw new IOException("Problem configurating connection");
             }
             //String handle = this.handlePrefix + "/" + uuid;
-            logger.debug("Requesting handle: " + handle);
+            //logger.debug("Requesting handle: " + handle);
             URI uri = new URI(this.host + handle, true);
 
             HttpClient client = new HttpClient();
@@ -364,9 +364,9 @@ public class PIDService {
                     list.add(map2);
                 JSONArray a = JSONArray.fromObject(list);
                 jsonStr = a.toString();
-                logger.info(jsonStr);
+                //logger.info(jsonStr);
             } catch (JSONException e) {
-                logger.error("Unable to create JSON Request object",e);
+                //logger.error("Unable to create JSON Request object",e);
                 throw new IOException( "Unable to create JSON Request object");
             }
 
@@ -375,30 +375,30 @@ public class PIDService {
             try {
                 client.executeMethod(hc, httpput);
                 if (httpput.getStatusCode() != HttpStatus.SC_CREATED ) {
-                    logger.error("EPIC unexpected result[" + httpput.getStatusLine().toString()+"]");
+                    //logger.error("EPIC unexpected result[" + httpput.getStatusLine().toString()+"]");
                     throw new HandleCreationException("Handle creation failed. Unexpected failure: " + httpput.getStatusLine().toString() + ". " + httpput.getResponseBodyAsString());
                 }
             } finally {
-                logger.debug("EPIC result["+httpput.getResponseBodyAsString()+"]");
+                //logger.debug("EPIC result["+httpput.getResponseBodyAsString()+"]");
                 httpput.releaseConnection();
             }
 
             //A resolvable handle is returned using the global resolver
-            logger.info( "Created handle["+handle+"] for location ["+a_location+"]");
+            //logger.info( "Created handle["+handle+"] for location ["+a_location+"]");
         }
 
         return handle;
     }
 
     public void updateLocation(String handleValue, String uri, boolean isHuygens) throws PersistenceManagerCreationException {
-        logger.debug("isHuygens: " + isHuygens);
-        logger.info("Updating location for handle: " + handleValue + " to " + uri);
+        //logger.debug("isHuygens: " + isHuygens);
+        //logger.info("Updating location for handle: " + handleValue + " to " + uri);
         if (isHuygens) {
             HandleManager handleManager = HandleManager.newHandleManager(
                     this.cypher, this.namingAuthority, this.prefix, this.privateKey);
             // get rid of the prefix from handleValue, it is added automatically
             if (handleValue.contains("/")) {
-                logger.info("handleValue contains /, removing prefix");
+                //logger.info("handleValue contains /, removing prefix");
                 handleValue = handleValue.substring(handleValue.indexOf("/") + 1);
             }
             // updating the content of the handle
@@ -412,7 +412,7 @@ public class PIDService {
 
     public void updateLocation(String a_handle, String a_location, String version)throws IOException, HandleCreationException, NoSuchAlgorithmException, KeyStoreException, FileNotFoundException, FileNotFoundException, CertificateException, UnrecoverableKeyException, KeyManagementException, KeyManagementException, InvalidKeySpecException, InvalidKeySpecException, InvalidKeySpecException, InvalidKeySpecException{
         if (isTest) {
-            logger.info("[TESTMODE 8] Updated Handle=["+"PIDManager_"+ a_location+"] for location["+a_location+"]");
+            //logger.info("[TESTMODE 8] Updated Handle=["+"PIDManager_"+ a_location+"] for location["+a_location+"]");
             return;
         }
 
@@ -420,7 +420,7 @@ public class PIDService {
         if (!handle.contains("/"))
             handle = this.handlePrefix + "/" + handle;
         
-        logger.debug("Updating handle: " + handle);
+        //logger.debug("Updating handle: " + handle);
 
         URL url = new URL(this.host + handle);
         
@@ -445,11 +445,11 @@ public class PIDService {
         osw.flush();
         osw.close();
 
-        logger.debug("Server response: " + httpsUrlConnection.getResponseCode() + " " + httpsUrlConnection.getResponseMessage());
+        //logger.debug("Server response: " + httpsUrlConnection.getResponseCode() + " " + httpsUrlConnection.getResponseMessage());
 
         httpsUrlConnection.disconnect();
         
-        logger.info( "Updated handle["+handle+"] for location ["+a_location+"]");
+        //logger.info( "Updated handle["+handle+"] for location ["+a_location+"]");
 
 
     }
@@ -459,7 +459,7 @@ public class PIDService {
             updateLocation(a_handle, a_location, this.versionNumber);
         } else {
             if (isTest) {
-                logger.info("[TESTMODE] Handled request location change for Handle=["+a_handle+"] to new location["+a_location+"] ... did nothing");
+                //logger.info("[TESTMODE] Handled request location change for Handle=["+a_handle+"] to new location["+a_location+"] ... did nothing");
                 return;
             }
             UUID uuid = UUID.randomUUID();
@@ -467,7 +467,7 @@ public class PIDService {
             try {
                 easyhttps = new Protocol("https", new EasySSLProtocolSocketFactory(), 443);
             } catch(Exception e){
-                logger.error("Problem configurating connection",e);
+                //logger.error("Problem configurating connection",e);
                 throw new IOException("Problem configurating connection");
             }
 
@@ -507,10 +507,10 @@ public class PIDService {
                     list.add(map2);
                 JSONArray a = JSONArray.fromObject(list);
                 jsonStr = a.toString();
-                logger.info(jsonStr);
+                //logger.info(jsonStr);
             }
             catch( JSONException e){
-                logger.error("Unable to create JSON Request object",e);
+                //logger.error("Unable to create JSON Request object",e);
                 throw new IOException("Unable to create JSON Request object");
             }
 
@@ -520,13 +520,13 @@ public class PIDService {
             try {
                 client.executeMethod(hc, httpput);
                 if (httpput.getStatusCode() == HttpStatus.SC_NO_CONTENT) {
-                    logger.info( "EPIC updated handle["+a_handle+"] for location ["+a_location+"]");
+                    //logger.info( "EPIC updated handle["+a_handle+"] for location ["+a_location+"]");
                 } else {
-                    logger.error("EPIC unexpected result[" + httpput.getStatusLine().toString()+"]");
+                    //logger.error("EPIC unexpected result[" + httpput.getStatusLine().toString()+"]");
                     throw new HandleCreationException("Handle creation failed. Unexpected failure: " + httpput.getStatusLine().toString() + ". " + httpput.getResponseBodyAsString());
                 }
             } finally {
-                logger.debug("EPIC result["+httpput.getResponseBodyAsString()+"]");
+                //logger.debug("EPIC result["+httpput.getResponseBodyAsString()+"]");
                 httpput.releaseConnection();
             }
         }
@@ -545,14 +545,14 @@ public class PIDService {
     } 
 
     public String getPIDLocation(String handleValue, boolean isHuygens) throws PersistenceManagerCreationException, PersistenceException {
-        logger.debug("isHuygens: " + isHuygens);
-        logger.info("Getting location for handle: " + handleValue);
+        //logger.debug("isHuygens: " + isHuygens);
+        //logger.info("Getting location for handle: " + handleValue);
         if (isHuygens) {
             HandleManager handleManager = HandleManager.newHandleManager(
                 this.cypher, this.namingAuthority, this.prefix, this.privateKey);
             // get rid of the prefix from handleValue, it is added automatically
             if (handleValue.contains("/")) {
-                logger.info("handleValue contains /, removing prefix");
+                //logger.info("handleValue contains /, removing prefix");
                 handleValue = handleValue.substring(handleValue.indexOf("/") + 1);
             }
             // getting the content of the handle
@@ -563,7 +563,7 @@ public class PIDService {
                 return null;
             }
         }
-        logger.error("not huygens, returning null");
+        //logger.error("not huygens, returning null");
         return null;
     }
 //    public String getPIDLocation(String handleValue, boolean isHuygens) throws PersistenceManagerCreationException, PersistenceException {
@@ -598,7 +598,7 @@ public class PIDService {
         String handle = a_handle;
         if (!handle.contains("/"))
             handle = this.handlePrefix + "/" + handle;
-        logger.debug("Getting location of handle: " + handle);
+        //logger.debug("Getting location of handle: " + handle);
         String location = null;
         JSONObject json = null;
         
@@ -631,10 +631,10 @@ public class PIDService {
                 location = json.getString("value");
                 break;
             case HttpStatus.SC_NOT_FOUND:
-                logger.warn("EPIC handle["+a_handle+"] doesn't exist[" + httpsUrlConnection.getResponseMessage()+"]");
+                //logger.warn("EPIC handle["+a_handle+"] doesn't exist[" + httpsUrlConnection.getResponseMessage()+"]");
                 break;
             default:
-                logger.error("EPIC unexpected result[" + httpsUrlConnection.getResponseMessage()+"]");
+                //logger.error("EPIC unexpected result[" + httpsUrlConnection.getResponseMessage()+"]");
                 throw new IOException("Handle retrieval failed["+a_handle+"]. Unexpected failure: " + httpsUrlConnection.getResponseMessage() + ". " + getJsonString(httpsUrlConnection.getInputStream()));
         }
         
@@ -651,7 +651,7 @@ public class PIDService {
             try {
                 easyhttps = new Protocol("https", new EasySSLProtocolSocketFactory(), 443);
             } catch (Exception e){
-                logger.error("Problem configurating connection",e);
+                //logger.error("Problem configurating connection",e);
                 throw new IOException("Problem configurating connection");
             }
             URI uri = new URI(host + a_handle, true);
@@ -676,20 +676,20 @@ public class PIDService {
                 client.executeMethod(hc, httpGet);
                 switch (httpGet.getStatusCode()) {
                     case HttpStatus.SC_OK:
-                        logger.debug(httpGet.getResponseBodyAsString());
+                        //logger.debug(httpGet.getResponseBodyAsString());
                         JSONArray jsonArr = JSONArray.fromObject(httpGet.getResponseBodyAsString());
                         json = jsonArr.getJSONObject(0);
                         location = json.getString("parsed_data");
                         break;
                     case HttpStatus.SC_NOT_FOUND:
-                        logger.warn("EPIC handle["+a_handle+"] doesn't exist[" + httpGet.getStatusLine().toString()+"]");
+                        //logger.warn("EPIC handle["+a_handle+"] doesn't exist[" + httpGet.getStatusLine().toString()+"]");
                         break;
                     default:
-                        logger.error("EPIC unexpected result[" + httpGet.getStatusLine().toString()+"]");
+                        //logger.error("EPIC unexpected result[" + httpGet.getStatusLine().toString()+"]");
                         throw new IOException("Handle retrieval failed["+a_handle+"]. Unexpected failure: " + httpGet.getStatusLine().toString() + ". " + httpGet.getResponseBodyAsString());
                 }
             } finally {
-                logger.debug("EPIC result["+httpGet.getResponseBodyAsString()+"]");
+                //logger.debug("EPIC result["+httpGet.getResponseBodyAsString()+"]");
                 httpGet.releaseConnection();
             }
         }
@@ -701,7 +701,7 @@ public class PIDService {
         try {
             url = new URL( "https://hdl.handle.net/" + a_PID);
         } catch (MalformedURLException e) {
-            logger.error("couldn't make PID actionable",e);
+            //logger.error("couldn't make PID actionable",e);
             //do nothing
             //null will be returned
         }
@@ -714,7 +714,7 @@ public class PIDService {
         } else {
             
             if (isTest) {
-                logger.info("[TESTMODE] Handled request delete for Handle=["+a_handle+"] ... did nothing");
+                //logger.info("[TESTMODE] Handled request delete for Handle=["+a_handle+"] ... did nothing");
                 return;
             }
             
@@ -722,7 +722,7 @@ public class PIDService {
             try {
                 easyhttps = new Protocol("https", new EasySSLProtocolSocketFactory(), 443);
             } catch (Exception e){
-                logger.error("Problem configurating connection",e);
+                //logger.error("Problem configurating connection",e);
                 throw new IOException("Problem configurating connection");
             }
             URI uri = new URI(host + a_handle, true);
@@ -744,25 +744,25 @@ public class PIDService {
             try {
                 client.executeMethod(hc, httpDel);
                 if (httpDel.getStatusCode() != HttpStatus.SC_NO_CONTENT) {
-                    logger.error("EPIC unexpected result[" + httpDel.getStatusLine().toString()+"]");
+                    //logger.error("EPIC unexpected result[" + httpDel.getStatusLine().toString()+"]");
                     throw new IOException("Handle retrieval failed["+a_handle+"]. Unexpected failure: " + httpDel.getStatusLine().toString() + ". " + httpDel.getResponseBodyAsString());
                 }
             } finally {
-                logger.debug("EPIC result["+httpDel.getResponseBodyAsString()+"]");
+                //logger.debug("EPIC result["+httpDel.getResponseBodyAsString()+"]");
                 httpDel.releaseConnection();
             }
         }
     }
 
     public void deleteHandle(String handleValue, boolean isHuygens) throws Exception {
-        logger.debug("isHuygens: " + isHuygens);
-        logger.info("Deleting handle: " + handleValue);
+        //logger.debug("isHuygens: " + isHuygens);
+        //logger.info("Deleting handle: " + handleValue);
         if (isHuygens) {
             HandleManager handleManager = HandleManager.newHandleManager(
                     this.cypher, this.namingAuthority, this.prefix, this.privateKey);
             // get rid of the prefix from handleValue, it is added automatically
             if (handleValue.contains("/")) {
-                logger.info("handleValue contains /, removing prefix");
+                //logger.info("handleValue contains /, removing prefix");
                 handleValue = handleValue.substring(handleValue.indexOf("/") + 1);
             }
             // delete
@@ -777,11 +777,11 @@ public class PIDService {
 
     public void deleteHandle(String a_handle, String version) throws MalformedURLException, IOException, NoSuchAlgorithmException, KeyStoreException, FileNotFoundException, CertificateException, UnrecoverableKeyException, KeyManagementException, InvalidKeySpecException {
         if (isTest) {
-            logger.info("[TESTMODE] Handled request delete for Handle=["+a_handle+"] ... did nothing");
+            //logger.info("[TESTMODE] Handled request delete for Handle=["+a_handle+"] ... did nothing");
             return;
         }
         String handle = a_handle;
-        logger.debug("Deleting handle: " + this.handlePrefix + "/" + handle);
+        //logger.debug("Deleting handle: " + this.handlePrefix + "/" + handle);
         
         URL url = new URL(this.host + this.handlePrefix + "/" + handle);
         
@@ -798,11 +798,11 @@ public class PIDService {
             httpsUrlConnection.connect();
             int responseCode = httpsUrlConnection.getResponseCode();
             if (responseCode!=HttpStatus.SC_OK) {
-                    logger.error("EPIC unexpected result[" +httpsUrlConnection.getResponseMessage()+ "]");
+                    //logger.error("EPIC unexpected result[" +httpsUrlConnection.getResponseMessage()+ "]");
                     throw new IOException("Handle retrieval failed["+a_handle+"]. Unexpected failure: " + httpsUrlConnection.getResponseMessage() + ". " + httpsUrlConnection.getContent().toString());
             }
         } finally {
-            logger.debug("EPIC result["+ httpsUrlConnection.getContent().toString()+"]");
+            //logger.debug("EPIC result["+ httpsUrlConnection.getContent().toString()+"]");
             httpsUrlConnection.disconnect();
         }
         

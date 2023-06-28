@@ -38,7 +38,7 @@ public class Main {
                 System.err.println();
                 System.err.println("If no explicit path to config is given th following locations are tried:");
                 System.err.println("- epicfy.xml in the current working directory");
-                System.err.println("- .epicfy.xml in the user's home directory");
+                System.err.println("- .epicfy/config.xml in the user's home directory");
                 System.exit(1);
             }
 
@@ -52,28 +52,26 @@ public class Main {
                 epic = null;
             }
             
-            System.err.println("DBG: CLI config["+epic+"]");
-            
             List<String> configs = new ArrayList();
             if (epic!=null)
                 configs.add(epic);
             
             configs.add(System.getProperty("user.dir")+System.getProperty("file.separator")+"epicify.xml"); //config in the CWD
-            configs.add(System.getProperty("user.home")+System.getProperty("file.separator")+".epicify.xml"); //hidden file in the HOME
+            configs.add(System.getProperty("user.home")+System.getProperty("file.separator")+".epicify"+System.getProperty("file.separator")+"config.xml"); //hidden file in the HOME
             
             File config = null;
             for (String c: configs) {
-                System.err.println("DBG: trying config["+c+"]");
+                //System.err.println("DBG: trying config["+c+"]");
                 config = new File(c);
                 if (config.exists() && config.isFile()&& config.canRead()) {
-                    System.err.println("DBG: using config["+c+"]");
+                    //System.err.println("DBG: using config["+c+"]");
                     break;
                 }
                 config = null;
             }
             
             if (config == null) {
-                System.err.println("No EPIC configuration could be loaded!");
+                System.err.println("!ERROR: No EPIC configuration could be loaded!");
                 System.err.println("Tried:");
                 for (String c: configs) {
                     System.err.println("- "+c);
@@ -109,7 +107,7 @@ public class Main {
                     String suf = (args.length > 4 ? args[startAction + 1] : null);
                     String uri = (args.length > 4 ? args[startAction + 2] : args[startAction + 1]);
                     if (uri == null) {
-                        System.err.println("new handle: needs a URI!");
+                        System.err.println("!ERROR: new handle: needs a URI!");
                         System.exit(3);
                     }
                     String hdl = suf == null ? ps.requestHandle(UUID.randomUUID().toString(), uri, version) : ps.requestHandle(suf, uri, version);
@@ -118,7 +116,7 @@ public class Main {
                 } else if (version.equals("hi")) {
                     // Huygens specific code for adding new handle
                     if (args.length != 3) {
-                        System.err.println("new handle: needs both action and url");
+                        System.err.println("!ERROR: new handle: needs both action and url");
                         System.exit(3);
                     } else {
                         String hdl = ps.requestHandle(args[startAction + 1], true);
@@ -128,7 +126,7 @@ public class Main {
                     String suf = ((args.length - startAction) > 2 ? args[startAction + 1] : null);
                     String uri = ((args.length - startAction) > 2 ? args[startAction + 2] : args[startAction + 1]);
                     if (uri == null) {
-                        System.err.println("new handle: needs a URI!");
+                        System.err.println("!ERROR: new handle: needs a URI!");
                         System.exit(3);
                     }
                     String hdl = suf == null ? ps.requestHandle(uri) : ps.requestHandle(suf, uri);
@@ -139,7 +137,7 @@ public class Main {
             } else if (action.equals("get")) {
                 if (version.equals("8")) {
                     if (args.length < 4) {
-                        System.err.println("get handle: needs a handle!");
+                        System.err.println("!ERROR: get handle: needs a handle!");
                         System.exit(3);
                     }
                     String hdl = args[startAction+ 1];
@@ -148,12 +146,12 @@ public class Main {
                         System.err.println("got handle: " + hdl + " -> " + uri);
                         System.out.println(uri);
                     } else {
-                        System.err.println("get handle: " + hdl + " -> doesn't exist!");
+                        System.err.println("!ERROR: get handle: " + hdl + " -> doesn't exist!");
                         System.exit(9);
                     }
                 } else if (version.equals("hi")) {
                     if ((args.length - startAction) != 2) {
-                        System.err.println("get handle: needs both action and handle!");
+                        System.err.println("!ERROR: get handle: needs both action and handle!");
                         System.exit(3);
                     } else {
                         String hdl = args[startAction + 1];
@@ -167,7 +165,7 @@ public class Main {
                     }
                 } else {
                     if ((args.length - startAction) < 2) {
-                        System.err.println("get handle: needs a handle!");
+                        System.err.println("!ERROR: get handle: needs a handle!");
                         System.exit(3);
                     }
                     String hdl = args[startAction + 1];
@@ -183,7 +181,7 @@ public class Main {
             } else if (action.equals("upd")) {
                 if (version.equals("8")) {
                     if ((args.length - startAction) < 4) {
-                        System.err.println("update handle: needs a handle and an uri!");
+                        System.err.println("!ERROR: update handle: needs a handle and an uri!");
                         System.exit(3);
                     }
                     String hdl = args[startAction + 1];
@@ -191,13 +189,13 @@ public class Main {
                     ps.updateLocation(hdl, uri, version);
                     String nw = ps.getPIDLocation(hdl, version);
                     if (!nw.equals(uri)) {
-                        System.err.println("FATAL: failed to update handle[" + hdl + "] to [" + uri + "]! It (still) refers to [" + nw + "].");
+                        System.err.println("!ERROR: failed to update handle[" + hdl + "] to [" + uri + "]! It (still) refers to [" + nw + "].");
                         System.exit(3);
                     }
                     System.err.println("updated handle: " + hdl + " -> " + uri);
                 } else if (version.equals("hi")) {
                     if ((args.length - startAction) != 3) {
-                        System.err.println("update handle: needs both action, handle and url");
+                        System.err.println("!ERROR: update handle: needs both action, handle and url");
                         System.exit(3);
                     } else {
                         String hdl = args[startAction + 1];
@@ -206,14 +204,14 @@ public class Main {
                         System.out.println("updated handle: " + hdl + " -> " + uri + "; verifying...");
                         String nw = ps.getPIDLocation(hdl, true);
                         if (!nw.equals(uri)) {
-                            System.err.println("FATAL: failed to update handle[" + hdl + "] to [" + uri + "]! It (still) refers to [" + nw + "].");
+                            System.err.println("!ERROR: failed to update handle[" + hdl + "] to [" + uri + "]! It (still) refers to [" + nw + "].");
                             System.exit(3);
                         }
                         System.err.println("updated handle: " + hdl + " -> " + uri);
                     }
                 } else {
                     if (args.length < 4) {
-                        System.err.println("update handle: needs a handle and an uri!");
+                        System.err.println("!ERROR: update handle: needs a handle and an uri!");
                         System.exit(3);
                     }
                     String hdl = args[startAction + 1];
@@ -221,7 +219,7 @@ public class Main {
                     ps.updateLocation(hdl, uri);
                     String nw = ps.getPIDLocation(hdl);
                     if (!nw.equals(uri)) {
-                        System.err.println("FATAL: failed to update handle[" + hdl + "] to [" + uri + "]! It (still) refers to [" + nw + "].");
+                        System.err.println("!ERROR: failed to update handle[" + hdl + "] to [" + uri + "]! It (still) refers to [" + nw + "].");
                         System.exit(3);
                     }
                     System.err.println("updated handle: " + hdl + " -> " + uri);
@@ -229,7 +227,7 @@ public class Main {
             } else if (action.equals("del")) {
                 if (version.equals("8")) {
                     if ((args.length - startAction) < 3) {
-                        System.err.println("delete handle: needs a handle!");
+                        System.err.println("!ERROR: delete handle: needs a handle!");
                         System.exit(3);
                     }
                     String hdl = args[startAction + 1];
@@ -241,7 +239,7 @@ public class Main {
                     }
                 } else if (version.equals("hi")) {
                     if ((args.length- startAction) != 2) {
-                        System.err.println("delete handle: needs both action and handle!");
+                        System.err.println("!ERROR: delete handle: needs both action and handle!");
                         System.exit(3);
                     } else {
                         String hdl = args[startAction + 1];
@@ -250,7 +248,7 @@ public class Main {
                     }
                 } else {
                     if ((args.length - startAction) < 2) {
-                        System.err.println("delete handle: needs a handle!");
+                        System.err.println("!ERROR: delete handle: needs a handle!");
                         System.exit(3);
                     }
                     String hdl = args[startAction + 1];
@@ -259,7 +257,7 @@ public class Main {
                 }
             } else if (action.equals("csv")) {
                 if ((args.length - startAction) < 2) {
-                    System.err.println("csv action: needs a CSV file!");
+                    System.err.println("!ERROR: csv action: needs a CSV file!");
                     System.exit(3);
                 }
                 File csv = new File(args[startAction + 1]);
@@ -315,18 +313,19 @@ public class Main {
                         loc = ps.getPIDLocation(hdl);                        
                     }
                     if (loc ==null || !loc.equals(uri)) {
-                        System.err.println("ERROR: CSV[" + csv.getAbsolutePath() + "][" + l + "] failed to upsert handle[" + hdl + "] to [" + uri + "]! It (still) refers to [" + loc + "].");
+                        System.err.println("!ERROR:  CSV[" + csv.getAbsolutePath() + "][" + l + "] failed to upsert handle[" + hdl + "] to [" + uri + "]! It (still) refers to [" + loc + "].");
                     } else
                         System.err.println("CSV[" + csv.getAbsolutePath() + "][" + l + "] " + (nw ? "new" : "updated") + " handle: " + hdl + " -> " + loc);
                 }
             }  else {
-                System.err.println("Unknown action!");
+                System.err.println("!ERROR: Unknown action!");
                 System.exit(4);
             }
 
         } catch (Exception e) {
-            System.err.println("FATAL: " + e);
+            System.err.println("!ERROR: : " + e);
             e.printStackTrace(System.err);
+            System.exit(9);
         }
 
     }

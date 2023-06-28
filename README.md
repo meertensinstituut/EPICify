@@ -12,7 +12,7 @@ update handle: <path to config> upd <prefix/suffix> <uri>
 delete handle: <path to config> del <prefix/suffix>
                NOTE: there might be a nodelete policy active!
 
-If no explicit path to config is given th following locations are tried:
+If no explicit path to config is given the following locations are tried:
 - epicfy.xml in the current working directory
 - .epicfy.xml in the user's home directory 
 ```
