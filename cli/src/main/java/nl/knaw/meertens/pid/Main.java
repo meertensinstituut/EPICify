@@ -285,7 +285,7 @@ public class Main {
                     String uri = cols[1].trim();
                     String loc = null;
                     String hdl = suffix;
-                    if (!(hdl==null || hdl.equals(""))) {
+                    if (hdl!=null && !hdl.equals("")) {
                         if (!suffix.startsWith(prefix))
                             hdl = prefix + "/" + suffix;
                         if (version.equals("hi")) {
@@ -294,7 +294,7 @@ public class Main {
                             loc = ps.getPIDLocation(hdl);                        
                         }
                         if (version.equals("hi"))
-                            System.err.println("version[hi]: suffix["+suffix+"] will be ignored! an unique suffix will be generated.");
+                            System.err.println("!WRN: version[hi] suffix["+suffix+"] will be ignored! an unique suffix will be generated.");
                     }
                     boolean nw = (loc == null);
                     if (nw) {
