@@ -37,7 +37,7 @@ public class Main {
                 System.err.println("                     and an update for an existing suffix");
                 System.err.println();
                 System.err.println("If no explicit path to config is given th following locations are tried:");
-                System.err.println("- epicfy.xml in the current working directory");
+                System.err.println("- config.xml in the current working directory");
                 System.err.println("- .epicfy/config.xml in the user's home directory");
                 System.exit(1);
             }
@@ -56,7 +56,7 @@ public class Main {
             if (epic!=null)
                 configs.add(epic);
             
-            configs.add(System.getProperty("user.dir")+System.getProperty("file.separator")+"epicify.xml"); //config in the CWD
+            configs.add(System.getProperty("user.dir")+System.getProperty("file.separator")+"config.xml"); //config in the CWD
             configs.add(System.getProperty("user.home")+System.getProperty("file.separator")+".epicify"+System.getProperty("file.separator")+"config.xml"); //hidden file in the HOME
             
             File config = null;
@@ -281,14 +281,20 @@ public class Main {
                     String[] cols = line.split(",");
                     if (cols.length != 2)
                         System.err.println("ERROR: CSV[" + csv.getAbsolutePath() + "][" + l + "] doesn't contain 2 columns!");
-                    String suffix = cols[0];
-                    String uri = cols[1];
-                    String hdl = prefix + "/" + suffix;
-                    String loc;
-                    if (version.equals("hi")) {
-                        loc = ps.getPIDLocation(hdl, true); 
-                    } else {
-                        loc = ps.getPIDLocation(hdl);                        
+                    String suffix = cols[0].trim();
+                    String uri = cols[1].trim();
+                    String loc = null;
+                    String hdl = suffix;
+                    if (!(hdl==null || hdl.equals(""))) {
+                        if (!suffix.startsWith(prefix))
+                            hdl = prefix + "/" + suffix;
+                        if (version.equals("hi")) {
+                            loc = ps.getPIDLocation(hdl, true); 
+                        } else {
+                            loc = ps.getPIDLocation(hdl);                        
+                        }
+                        if (version.equals("hi"))
+                            System.err.println("version[hi]: suffix["+suffix+"] will be ignored! an unique suffix will be generated.");
                     }
                     boolean nw = (loc == null);
                     if (nw) {
