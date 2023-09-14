@@ -18,10 +18,10 @@ export LANG=en_US.UTF-8
 # Do not assume the script is invoked from the directory it is located in; get
 # the directory the script is located in
 thisDir="$(dirname "$(${READLINK} -f "$0")")"
-if [ -f $thisDir/epicify-${version}.jar ]; then
-  JAR=$thisDir/epicify-${version}.jar
+if [ -f ${thisDir}/epicify-${version}.jar ]; then
+  JAR="${thisDir}/epicify-${version}.jar"
 else
-  JAR=$HOME/.epicify/epicify-${version}.jar
+  JAR="${EPICIFY_HOME:-${HOME}/.epicify}/epicify-${version}.jar"
 fi
 
 nice ${JAVA} -jar ${JAR} $*

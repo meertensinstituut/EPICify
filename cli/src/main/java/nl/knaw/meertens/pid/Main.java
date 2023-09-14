@@ -56,6 +56,7 @@ public class Main {
             if (epic!=null)
                 configs.add(epic);
             
+            configs.add(System.getenv().get("EPICIFY_HOME")+System.getProperty("file.separator")+"config.xml");
             configs.add(System.getProperty("user.dir")+System.getProperty("file.separator")+"config.xml"); //config in the CWD
             configs.add(System.getProperty("user.home")+System.getProperty("file.separator")+".epicify"+System.getProperty("file.separator")+"config.xml"); //hidden file in the HOME
             
