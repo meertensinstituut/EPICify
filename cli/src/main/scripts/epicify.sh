@@ -19,9 +19,13 @@ export LANG=en_US.UTF-8
 # the directory the script is located in
 thisDir="$(dirname "$(${READLINK} -f "$0")")"
 if [ -f ${thisDir}/epicify-${version}.jar ]; then
-  JAR="${thisDir}/epicify-${version}.jar"
+  JAR="-jar ${thisDir}/epicify-${version}.jar"
+elif [ -f ${EPICIFY_HOME}/epicify-${version}.jar ]; then
+  JAR="-jar ${EPICIFY_HOME}/epicify-${version}.jar"
+elif [ -f ${HOME}/.epicify/epicify-${version}.jar ]; then
+  JAR="-jar ${HOME}/.epicify/epicify-${version}.jar"
 else
-  JAR="${EPICIFY_HOME:-${HOME}/.epicify}/epicify-${version}.jar"
+  echo "WRN: didn't find epicify-${version}.jar, trying the CLASSPATH!"
 fi
 
-nice ${JAVA} -jar ${JAR} $*
+nice ${JAVA} ${JAR} $*
